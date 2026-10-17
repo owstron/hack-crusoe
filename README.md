@@ -4,10 +4,11 @@ A self-improving agent team, built on Crusoe Managed Inference. The team runs ad
 
 Hackathon theme: **Version N+1** (with **Done Means Done** as the verifier).
 
-- [brainstorm.md](brainstorm.md): project brief, architecture, and task split
+- [ARCHITECTURE.md](ARCHITECTURE.md): how the agents connect (diagrams of one campaign and of the improvement loop)
+- [planning/brainstorm.md](planning/brainstorm.md): project brief, architecture, and task split
 - [sim_calibration.md](sim_calibration.md): research behind every simulator setting and trap
 - [research/youdotcom/](research/youdotcom/): raw You.com research responses with sources
-- [HACKATHON.md](HACKATHON.md): event rules and judging criteria
+- [planning/HACKATHON.md](planning/HACKATHON.md): event rules and judging criteria
 
 ## Setup
 
