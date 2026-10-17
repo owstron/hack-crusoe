@@ -28,11 +28,17 @@ from typing import Callable, List, Optional
 import numpy as np
 
 from sim import LINE_ITEMS
+from sim import gate as gate_mod
 from sim.gate import MARGIN, evaluate_version, run_gate
 from store import DEFAULT_PATH, Store, truth
 
 N_FAILURES = 3
 TRAIN_SEEDS = (0,)  # one seed per train campaign is enough to find failures
+N_TRAIN = 6         # train campaigns per round
+BUDGET_MOVES = ("shift_budget", "pause")  # actions that move money
+IDLE_RATIO = 0.5  # a candidate whose agents make under this share of the base's budget moves is flagged as idle
+STAGNATION_ROUNDS = 2  # rounds in a row without an accepted edit before the improver is asked to explore
+RECHECK_SEED_BASE = 100  # an explore winner is re-gated on sim seeds RECHECK_SEED_BASE.. (fresh noise)
 
 
 def load(spec: str) -> Callable:
@@ -40,10 +46,15 @@ def load(spec: str) -> Callable:
     return getattr(importlib.import_module(module), fn)
 
 
-async def _call(fn: Callable, *args):
+async def _call(fn: Callable, *args, **kwargs):
     if inspect.iscoroutinefunction(fn):
-        return await fn(*args)
-    return await asyncio.to_thread(fn, *args)
+        return await fn(*args, **kwargs)
+    return await asyncio.to_thread(lambda: fn(*args, **kwargs))
+
+
+def _accepts(fn: Callable, name: str) -> bool:
+    params = inspect.signature(fn).parameters
+    return name in params or any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
 
 
 def summarize_run(row: dict, store_path: Optional[str] = None) -> dict:
@@ -77,9 +88,12 @@ def summarize_run(row: dict, store_path: Optional[str] = None) -> dict:
         if isinstance(e.get("error"), str):
             e["error"] = e["error"][-500:]
         events.append(e)
+    moves = sum(1 for e in sim.trace if e["kind"] == "action" and e.get("ok")
+                and (e.get("payload") or {}).get("type") in BUDGET_MOVES)
     return {
         "campaign": row["campaign"], "seed": row["seed"], "score": round(row["score"], 3),
         "agent_error": row["error"],
+        "budget_moves": moves,  # 0 means the agents sat idle: the playbook may be too vague or too cautious to act on
         "truth": debrief["line_items"],
         "achieved_vs_best": [debrief["achieved_incremental"], debrief["best_possible_incremental"]],
         "checkpoints": checkpoints,
@@ -111,7 +125,7 @@ def _restore(changelog: List[dict]) -> dict:
     for e in changelog:
         if e.get("event") == "gate":
             history.append({"round": e["round"], "summary": e.get("summary"), "accepted": e["accepted"],
-                            "mean_diff": round(e["mean_diff"], 4), "reason": e["reason"]})
+                            "mean_diff": round(e["mean_diff"], 4), "reason": e["reason"], "diff": e.get("diff")})
             if e["accepted"]:
                 current, base_scores = e["new_version"], e["val_scores"]
                 versions.append({"version": current, "round": e["round"], "val_mean": e["cand_mean"]})
@@ -166,10 +180,16 @@ async def improve(runner: Callable, improver: Callable, start: str, name: str, r
     for rnd in range(first_round, rounds + 1):
         t0 = time.time()
         playbook = open(current).read()
-        train = await evaluate_version(runner, current, "train", seeds=TRAIN_SEEDS, keep_sims=True, store_path=store_path)
+        train = await evaluate_version(runner, current, "train", n=N_TRAIN, seeds=TRAIN_SEEDS, keep_sims=True,
+                                     store_path=store_path)
         train_mean = float(np.mean([r["score"] for r in train.values()]))
+        stagnant = (rnd - 1) - versions[-1]["round"]  # rounds since the last accepted edit
+        explore = {"seed": f"{name}:{rnd}"} if stagnant >= STAGNATION_ROUNDS and _accepts(improver, "explore") else None
+        if explore:
+            print(f"  round {rnd}: {stagnant} rounds without an accepted edit, exploring (seed {explore['seed']})", flush=True)
         try:
-            proposal = await _call(improver, playbook, worst_runs(train, store_path=store_path), history)
+            proposal = await _call(improver, playbook, worst_runs(train, store_path=store_path), history,
+                                   **({"explore": explore} if explore else {}))
         except Exception as e:
             log({"round": rnd, "event": "improver_error", "error": f"{type(e).__name__}: {e}",
                  "traceback": traceback.format_exc()[-1500:]})
@@ -177,43 +197,82 @@ async def improve(runner: Callable, improver: Callable, start: str, name: str, r
         if not proposal:
             log({"round": rnd, "event": "no_proposal"})
             break
-        new_text = proposal.get("new_playbook") or ""
-        if not new_text.strip() or new_text.strip() == playbook.strip():
-            log({"round": rnd, "event": "empty_edit", "summary": proposal.get("summary")})
-            history.append({"round": rnd, "summary": proposal.get("summary"), "accepted": False,
-                            "mean_diff": 0.0, "reason": "edit was empty or identical"})
+        # One proposal may carry alternatives ("alternatives": more edits of the same shape). Each is gated against the
+        # same baseline scores; at most one (the best passing) is accepted per round.
+        proposals = [proposal] + list(proposal.get("alternatives") or [])
+        usable = []
+        for i, prop in enumerate(proposals, 1):
+            new_text = prop.get("new_playbook") or ""
+            if not new_text.strip() or new_text.strip() == playbook.strip():
+                log({"round": rnd, "event": "empty_edit", "summary": prop.get("summary")})
+                history.append({"round": rnd, "summary": prop.get("summary"), "accepted": False,
+                                "mean_diff": 0.0, "reason": "edit was empty or identical"})
+                continue
+            tag = f"round{rnd}" if len(proposals) == 1 else f"round{rnd}_{i}"
+            cand = os.path.join(root, "candidates", f"{tag}.md")
+            with open(cand, "w") as f:
+                f.write(new_text)
+            usable.append((tag, cand, prop, new_text))
+        if not usable:
             continue
-
-        cand = os.path.join(root, "candidates", f"round{rnd}.md")
-        with open(cand, "w") as f:
-            f.write(new_text)
-        gate = await run_gate(runner, current, cand, base_scores=base_scores, margin=margin, store_path=store_path)
-        entry = {
-            "round": rnd, "event": "gate", "base_version": current, "candidate": cand,
-            "summary": proposal.get("summary"), "rationale": proposal.get("rationale"),
-            "sources": proposal.get("sources") or [],
-            **({"improver_calls": proposal["improver_calls"]} if proposal.get("improver_calls") else {}),
-            **({"diagnosis": proposal["diagnosis"]} if proposal.get("diagnosis") else {}),
-            "diff": _diff(playbook, new_text, os.path.basename(current), f"round{rnd}.md"),
-            "train_mean": round(train_mean, 4),
-            **{k: gate[k] for k in ("accepted", "reason", "base_mean", "cand_mean", "mean_diff", "ci95",
-                                    "wins", "losses", "n_pairs", "cand_errors")},
-            "val_scores": _strip(gate["cand_scores"]),
-        }
-        if gate["accepted"]:
-            parent = current
-            current = os.path.join(root, "playbooks", f"v{len(versions) + 1}.md")
-            shutil.copy(cand, current)
-            store.save_playbook(name, current, new_text, parent=parent, diff=entry["diff"],
-                                gate_result={k: v for k, v in entry.items() if k not in ("diff", "val_scores")},
-                                research_urls=entry["sources"])
-            base_scores = gate["cand_scores"]
-            versions.append({"version": current, "round": rnd, "val_mean": gate["cand_mean"]})
-            entry["new_version"] = current
-        entry["seconds"] = round(time.time() - t0, 1)
-        log(entry)
-        history.append({"round": rnd, "summary": proposal.get("summary"), "accepted": gate["accepted"],
-                        "mean_diff": round(gate["mean_diff"], 4), "reason": gate["reason"]})
+        gates = await asyncio.gather(*[run_gate(runner, current, cand, base_scores=base_scores, margin=margin,
+                                                store_path=store_path) for _, cand, _, _ in usable])
+        passing = [k for k, g in enumerate(gates) if g["accepted"]]
+        winner = max(passing, key=lambda k: gates[k]["mean_diff"]) if passing else None
+        best, recheck = winner, None
+        if explore and winner is not None:
+            # Exploration tries many random ideas against the same validation campaigns, so a winner must also pass
+            # the gate again on fresh sim seeds before it is accepted.
+            seeds = tuple(range(RECHECK_SEED_BASE, RECHECK_SEED_BASE + len(gate_mod.SEEDS)))
+            recheck = await run_gate(runner, current, usable[winner][1], margin=margin, store_path=store_path, seeds=seeds)
+            if not recheck["accepted"]:
+                best = None
+        chosen = None
+        base_moves = store.budget_moves_per_run(current, "validation")
+        for k, ((tag, cand, prop, new_text), gate) in enumerate(zip(usable, gates)):
+            accepted = k == best
+            reason = gate["reason"]
+            cand_moves = store.budget_moves_per_run(cand, "validation")
+            if base_moves and cand_moves is not None and cand_moves < IDLE_RATIO * base_moves:
+                reason += (f" [idle: agents made {cand_moves:.1f} budget moves per run vs {base_moves:.1f} for the base;"
+                           " the rules were probably too vague or cautious to act on]")
+            if k == winner and recheck is not None and not accepted:
+                reason = f"passed the gate ({gate['mean_diff']:+.3f}) but failed the fresh-seed recheck: {recheck['reason']}"
+            elif gate["accepted"] and not accepted:
+                reason = f"passed the gate ({gate['mean_diff']:+.3f}) but {usable[winner][0]} was better"
+            entry = {
+                "round": rnd, "event": "gate", "base_version": current, "candidate": cand,
+                "summary": prop.get("summary"), "rationale": prop.get("rationale"),
+                "sources": prop.get("sources") or proposal.get("sources") or [],
+                **({"improver_calls": proposal["improver_calls"]} if proposal.get("improver_calls") else {}),
+                **({"diagnosis": proposal["diagnosis"]} if proposal.get("diagnosis") else {}),
+                **({"explore": {**proposal["explore"], "stagnant_rounds": stagnant}} if proposal.get("explore") else {}),
+                **({"recheck": {key: recheck[key] for key in ("accepted", "reason", "base_mean", "cand_mean", "mean_diff",
+                                                              "ci95", "wins", "losses", "n_pairs")}}
+                   if recheck is not None and k == winner else {}),
+                "diff": _diff(playbook, new_text, os.path.basename(current), f"{tag}.md"),
+                "train_mean": round(train_mean, 4),
+                **{key: gate[key] for key in ("base_mean", "cand_mean", "mean_diff", "ci95", "wins", "losses",
+                                              "n_pairs", "cand_errors")},
+                "accepted": accepted, "reason": reason,
+                "budget_moves_per_run": {"base": base_moves, "candidate": cand_moves},
+                "val_scores": _strip(gate["cand_scores"]),
+            }
+            if accepted:
+                parent = current
+                chosen = (tag, gate)
+                current = os.path.join(root, "playbooks", f"v{len(versions) + 1}.md")
+                shutil.copy(cand, current)
+                store.save_playbook(name, current, new_text, parent=parent, diff=entry["diff"],
+                                    gate_result={key: v for key, v in entry.items() if key not in ("diff", "val_scores")},
+                                    research_urls=entry["sources"])
+                base_scores = gate["cand_scores"]
+                versions.append({"version": current, "round": rnd, "val_mean": gate["cand_mean"]})
+                entry["new_version"] = current
+            entry["seconds"] = round(time.time() - t0, 1)
+            log(entry)
+            history.append({"round": rnd, "summary": prop.get("summary"), "accepted": accepted,
+                            "mean_diff": round(gate["mean_diff"], 4), "reason": reason, "diff": entry["diff"]})
 
     summary = {"name": name, "start": start, "final_version": current, "versions": versions,
                "rounds": rounds, "history": history}

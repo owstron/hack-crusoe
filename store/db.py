@@ -190,6 +190,21 @@ class Store:
                         "parsed": _load(r["parsed_json"]), "error": r["error"], "fallback_used": bool(r["fallback_used"])})
         return sorted(out, key=lambda e: e["event_id"])
 
+    def budget_moves_per_run(self, playbook_version: str, split: str,
+                             types: tuple = ("shift_budget", "pause")) -> Optional[float]:
+        """Average successful budget-moving actions per run for a playbook on a split (None if it has no runs)."""
+        runs = [r[0] for r in self.conn.execute(
+            "SELECT r.run_id FROM runs r JOIN scores s ON s.run_id = r.run_id WHERE r.playbook_version = ? AND s.split = ?",
+            (playbook_version, split))]
+        if not runs:
+            return None
+        marks = ",".join("?" * len(runs))
+        kinds = ",".join("?" * len(types))
+        n = self.conn.execute(
+            f"SELECT COUNT(*) FROM actions WHERE result_ok = 1 AND run_id IN ({marks})"
+            f" AND json_extract(action_json, '$.type') IN ({kinds})", (*runs, *types)).fetchone()[0]
+        return n / len(runs)
+
     # ---- backend state (live backends) ----
     def save_backend_state(self, run_id: str, state: dict) -> None:
         with self._txn() as c:
