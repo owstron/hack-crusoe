@@ -232,3 +232,6 @@ runs/*.stub_v1.md
 # Generated run artifacts (live ad_swarm_full.py runs)
 ad_swarm.db
 runs.jsonl
+store/*.db
+store/*.db-wal
+store/*.db-shm

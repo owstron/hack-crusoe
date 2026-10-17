@@ -8,8 +8,9 @@ Plug-ins (import strings "module:function", sync or async):
         history: earlier proposals [{round, summary, accepted, mean_diff, reason}].
         Returns {"new_playbook": str, "summary": str, "rationale": str, "sources": [str]}, or None to stop.
 
-Each run lives in runs/<name>/: playbooks/v1.md, v2.md, ... (accepted versions), candidates/roundN.md,
-changelog.jsonl (one line per round), summary.json (versions and validation scores).
+Each run lives in runs/<name>/: playbooks/v1.md, v2.md, ... (accepted versions), candidates/roundN.md.
+The change log, playbook versions, gate results and summary are written to the run store (store/adswarm.db),
+which is the source of record; report/build_page.py renders runs/<name>/index.html from it.
 """
 from __future__ import annotations
 
@@ -28,6 +29,7 @@ import numpy as np
 
 from sim import LINE_ITEMS
 from sim.gate import MARGIN, evaluate_version, run_gate
+from store import DEFAULT_PATH, Store, truth
 
 N_FAILURES = 3
 TRAIN_SEEDS = (0,)  # one seed per train campaign is enough to find failures
@@ -44,10 +46,14 @@ async def _call(fn: Callable, *args):
     return await asyncio.to_thread(fn, *args)
 
 
-def summarize_run(row: dict) -> dict:
+def summarize_run(row: dict, store_path: Optional[str] = None) -> dict:
     """What the improver sees for one train run: score, hidden truth, observed metrics, agent actions."""
     sim = row["sim"]
-    debrief = sim.debrief()
+    debrief = None
+    if store_path and row.get("run_id"):  # train-split hidden truth, through the store's privileged accessor
+        with Store(store_path) as st:
+            debrief = truth.train_debrief(st, row["run_id"])
+    debrief = debrief or sim.debrief()
     checkpoints = []
     for w in sim.history:
         checkpoints.append({"checkpoint": w["checkpoint"], "period": w["period"], "status": w["status"], "line_items": {li: {
@@ -79,9 +85,9 @@ def summarize_run(row: dict) -> dict:
     }
 
 
-def worst_runs(scores: dict, k: int = N_FAILURES) -> List[dict]:
+def worst_runs(scores: dict, k: int = N_FAILURES, store_path: Optional[str] = None) -> List[dict]:
     rows = sorted(scores.values(), key=lambda r: r["score"])
-    return [summarize_run(r) for r in rows[:k]]
+    return [summarize_run(r, store_path) for r in rows[:k]]
 
 
 def _diff(old: str, new: str, old_name: str, new_name: str) -> str:
@@ -93,7 +99,7 @@ def _strip(scores: dict) -> dict:
 
 
 async def improve(runner: Callable, improver: Callable, start: str, name: str, rounds: int,
-                  margin: float = MARGIN, overwrite: bool = False) -> dict:
+                  margin: float = MARGIN, overwrite: bool = False, store_path: str = DEFAULT_PATH) -> dict:
     root = os.path.join("runs", name)
     if os.path.exists(root):
         if not overwrite:
@@ -101,18 +107,19 @@ async def improve(runner: Callable, improver: Callable, start: str, name: str, r
         shutil.rmtree(root)
     os.makedirs(os.path.join(root, "playbooks"))
     os.makedirs(os.path.join(root, "candidates"))
-    log_path = os.path.join(root, "changelog.jsonl")
+    store = Store(store_path)
+    store.start_session(name, overwrite=overwrite)
 
     def log(entry: dict):
         entry["time"] = time.strftime("%H:%M:%S")
-        with open(log_path, "a") as f:
-            f.write(json.dumps(entry) + "\n")
+        store.record_improvement(name, entry)
         print(json.dumps({k: v for k, v in entry.items() if k not in ("diff", "rationale", "val_scores")})[:300], flush=True)
 
     current = os.path.join(root, "playbooks", "v1.md")
     shutil.copy(start, current)
+    store.save_playbook(name, current, open(current).read())
     t0 = time.time()
-    base_scores = await evaluate_version(runner, current, "validation")
+    base_scores = await evaluate_version(runner, current, "validation", store_path=store_path)
     base_mean = float(np.mean([r["score"] for r in base_scores.values()]))
     versions = [{"version": current, "round": 0, "val_mean": base_mean}]
     log({"round": 0, "event": "baseline", "version": current, "val_mean": round(base_mean, 4),
@@ -122,10 +129,10 @@ async def improve(runner: Callable, improver: Callable, start: str, name: str, r
     for rnd in range(1, rounds + 1):
         t0 = time.time()
         playbook = open(current).read()
-        train = await evaluate_version(runner, current, "train", seeds=TRAIN_SEEDS, keep_sims=True)
+        train = await evaluate_version(runner, current, "train", seeds=TRAIN_SEEDS, keep_sims=True, store_path=store_path)
         train_mean = float(np.mean([r["score"] for r in train.values()]))
         try:
-            proposal = await _call(improver, playbook, worst_runs(train), history)
+            proposal = await _call(improver, playbook, worst_runs(train, store_path=store_path), history)
         except Exception as e:
             log({"round": rnd, "event": "improver_error", "error": f"{type(e).__name__}: {e}",
                  "traceback": traceback.format_exc()[-1500:]})
@@ -143,7 +150,7 @@ async def improve(runner: Callable, improver: Callable, start: str, name: str, r
         cand = os.path.join(root, "candidates", f"round{rnd}.md")
         with open(cand, "w") as f:
             f.write(new_text)
-        gate = await run_gate(runner, current, cand, base_scores=base_scores, margin=margin)
+        gate = await run_gate(runner, current, cand, base_scores=base_scores, margin=margin, store_path=store_path)
         entry = {
             "round": rnd, "event": "gate", "base_version": current, "candidate": cand,
             "summary": proposal.get("summary"), "rationale": proposal.get("rationale"),
@@ -155,8 +162,12 @@ async def improve(runner: Callable, improver: Callable, start: str, name: str, r
             "val_scores": _strip(gate["cand_scores"]),
         }
         if gate["accepted"]:
+            parent = current
             current = os.path.join(root, "playbooks", f"v{len(versions) + 1}.md")
             shutil.copy(cand, current)
+            store.save_playbook(name, current, new_text, parent=parent, diff=entry["diff"],
+                                gate_result={k: v for k, v in entry.items() if k not in ("diff", "val_scores")},
+                                research_urls=entry["sources"])
             base_scores = gate["cand_scores"]
             versions.append({"version": current, "round": rnd, "val_mean": gate["cand_mean"]})
             entry["new_version"] = current
@@ -167,6 +178,6 @@ async def improve(runner: Callable, improver: Callable, start: str, name: str, r
 
     summary = {"name": name, "start": start, "final_version": current, "versions": versions,
                "rounds": rounds, "history": history}
-    with open(os.path.join(root, "summary.json"), "w") as f:
-        json.dump(summary, f, indent=2)
+    store.finish_session(name, summary)
+    store.close()
     return summary

@@ -52,12 +52,13 @@ def _summary(scores: dict) -> dict:
     }
 
 
-async def final_eval(runner: Callable, v1, final, out_path: str = OUT_PATH, force: bool = False) -> dict:
+async def final_eval(runner: Callable, v1, final, out_path: str = OUT_PATH, force: bool = False,
+                     store_path: str = None, session: str = None) -> dict:
     if os.path.exists(out_path) and not force:
         raise RuntimeError(f"{out_path} exists: test set already used. Pass force=True only to fix a crash.")
     t0 = time.time()
-    base = await evaluate_version(runner, v1, "test", keep_sims=True)
-    cand = await evaluate_version(runner, final, "test", keep_sims=True)
+    base = await evaluate_version(runner, v1, "test", keep_sims=True, store_path=store_path)
+    cand = await evaluate_version(runner, final, "test", keep_sims=True, store_path=store_path)
     stats = paired_stats(base, cand)
     result = {
         "split": "test",
@@ -71,6 +72,10 @@ async def final_eval(runner: Callable, v1, final, out_path: str = OUT_PATH, forc
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(result, f, indent=2)
+    if store_path and session:
+        from store import Store
+        with Store(store_path) as st:
+            st.save_final_eval(session, result)
     return result
 
 

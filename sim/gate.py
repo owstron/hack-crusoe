@@ -54,9 +54,19 @@ async def _play(runner: Callable, version, sim: Simulator) -> Optional[str]:
     return error
 
 
+def _persist(store_path: str, sim: Simulator, split: str, sc: float, version, error: Optional[str]) -> str:
+    from store import Store  # one short-lived connection per worker thread
+    from store.sim_io import persist_sim
+    with Store(store_path) as st:
+        return persist_sim(st, sim, split=split, score=sc, playbook_version=str(version),
+                           with_debrief=(split == "train"), error=error)
+
+
 async def evaluate_version(runner: Callable, version, split: str, n: int = N_CAMPAIGNS,
-                           seeds: Sequence[int] = SEEDS, keep_sims: bool = False) -> Dict[str, dict]:
-    """Score `version` on every (campaign, seed) of a split. Returns {"<campaign_id>/s<seed>": {...}}."""
+                           seeds: Sequence[int] = SEEDS, keep_sims: bool = False,
+                           store_path: Optional[str] = None) -> Dict[str, dict]:
+    """Score `version` on every (campaign, seed) of a split. Returns {"<campaign_id>/s<seed>": {...}}.
+    With store_path, every run is also written through the run store (debriefs for the train split only)."""
     sem = asyncio.Semaphore(CONCURRENCY)  # created inside the running loop
 
     async def one(campaign, seed):
@@ -66,6 +76,8 @@ async def evaluate_version(runner: Callable, version, split: str, n: int = N_CAM
             error = await _play(runner, version, sim)
             row = {"campaign": campaign.id, "seed": seed, "score": score(sim), "error": error,
                    "seconds": round(time.time() - t0, 1)}
+            if store_path:
+                row["run_id"] = await asyncio.to_thread(_persist, store_path, sim, split, row["score"], version, error)
             if keep_sims:
                 row["sim"] = sim
             return f"{campaign.id}/s{seed}", row
@@ -105,16 +117,16 @@ def decide(stats: dict, margin: float = MARGIN, require_ci: bool = True) -> tupl
 
 
 async def run_gate(runner: Callable, base_version, cand_version, base_scores: Optional[Dict[str, dict]] = None,
-                   margin: float = MARGIN, require_ci: bool = True) -> dict:
+                   margin: float = MARGIN, require_ci: bool = True, store_path: Optional[str] = None) -> dict:
     """Paired comparison on VALIDATION. Pass base_scores (from a previous evaluate_version on the
     current accepted version) to skip rerunning it; the campaigns and seeds are identical."""
     t0 = time.time()
     if base_scores is None:
         base_scores, cand_scores = await asyncio.gather(
-            evaluate_version(runner, base_version, "validation"),
-            evaluate_version(runner, cand_version, "validation"))
+            evaluate_version(runner, base_version, "validation", store_path=store_path),
+            evaluate_version(runner, cand_version, "validation", store_path=store_path))
     else:
-        cand_scores = await evaluate_version(runner, cand_version, "validation")
+        cand_scores = await evaluate_version(runner, cand_version, "validation", store_path=store_path)
     stats = paired_stats(base_scores, cand_scores)
     accepted, reason = decide(stats, margin, require_ci)
     return {

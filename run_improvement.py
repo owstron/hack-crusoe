@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 
 from improve.loop import improve, load
 from sim.gate import MARGIN
+from store import DEFAULT_PATH
 
 
 def main():
@@ -24,6 +25,7 @@ def main():
     p.add_argument("--improver", default="improve.stubs:propose_edit")
     p.add_argument("--margin", type=float, default=MARGIN)
     p.add_argument("--overwrite", action="store_true")
+    p.add_argument("--db", default=DEFAULT_PATH, help="run store database")
     a = p.parse_args()
 
     load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
@@ -35,7 +37,8 @@ def main():
     if a.runner.startswith("improve.stubs") or a.improver.startswith("improve.stubs"):
         print("NOTE: using model-free stubs from improve/stubs.py")
 
-    summary = asyncio.run(improve(load(a.runner), load(a.improver), a.start, a.name, a.rounds, a.margin, a.overwrite))
+    summary = asyncio.run(improve(load(a.runner), load(a.improver), a.start, a.name, a.rounds, a.margin, a.overwrite,
+                                 a.db))
     print("\nversions:")
     for v in summary["versions"]:
         print(f"  round {v['round']}: {v['version']}  val {v['val_mean']:.3f}")
