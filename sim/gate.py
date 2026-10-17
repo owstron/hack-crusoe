@@ -63,12 +63,16 @@ def _persist(store_path: str, sim: Simulator, split: str, sc: float, version, er
                            with_debrief=(split == "train"), error=error)
 
 
-async def evaluate_version(runner: Callable, version, split: str, n: int = N_CAMPAIGNS,
-                           seeds: Sequence[int] = SEEDS, keep_sims: bool = False,
+async def evaluate_version(runner: Callable, version, split: str, n: Optional[int] = None,
+                           seeds: Optional[Sequence[int]] = None, keep_sims: bool = False,
                            store_path: Optional[str] = None) -> Dict[str, dict]:
     """Score `version` on every (campaign, seed) of a split. Returns {"<campaign_id>/s<seed>": {...}}.
-    With store_path, every run is also written through the run store (debriefs for the train split only)."""
+    With store_path, every run is also written through the run store (debriefs for the train split only).
+    n and seeds default to the module's N_CAMPAIGNS and SEEDS, read at call time so a CLI can shrink a run."""
+    n = N_CAMPAIGNS if n is None else n
+    seeds = SEEDS if seeds is None else seeds
     sem = asyncio.Semaphore(CONCURRENCY)  # created inside the running loop
+    total, done = len(seeds) * n, [0]
 
     async def one(campaign, seed):
         async with sem:
@@ -81,6 +85,10 @@ async def evaluate_version(runner: Callable, version, split: str, n: int = N_CAM
                 row["run_id"] = await asyncio.to_thread(_persist, store_path, sim, split, row["score"], version, error)
             if keep_sims:
                 row["sim"] = sim
+            done[0] += 1
+            print(f"  [{time.strftime('%H:%M:%S')}] {split} {done[0]}/{total} {campaign.id}/s{seed} "
+                  f"score={row['score']:.3f} {row['seconds']}s" + (f" ERROR={str(error)[:80]}" if error else ""),
+                  flush=True)
             return f"{campaign.id}/s{seed}", row
 
     jobs = [one(c, s) for c in generate_campaigns(n, split, CAMPAIGN_SEED) for s in seeds]

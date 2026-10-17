@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import random
+import sys
 import threading
 import time
 from dataclasses import dataclass
@@ -151,6 +152,8 @@ def call_model(role: str, messages: list[dict], *, client=None,
             if not _is_transient(e):
                 break
         if attempt <= max_retries:
+            print(f"  [{time.strftime('%H:%M:%S')}] {role} attempt {attempt}/{max_retries + 1} failed: "
+                  f"{(res.error or '')[:100]}; retrying", file=sys.stderr, flush=True)
             (sleep or time.sleep)(min(30.0, backoff_base * 2 ** (attempt - 1)) + random.uniform(0, 0.25 * backoff_base))
     if not res.ok:
         res.parsed, res.fallback_used = fallback, True

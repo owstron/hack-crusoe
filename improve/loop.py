@@ -33,6 +33,7 @@ from store import DEFAULT_PATH, Store, truth
 
 N_FAILURES = 3
 TRAIN_SEEDS = (0,)  # one seed per train campaign is enough to find failures
+N_TRAIN = 6         # train campaigns per round
 
 
 def load(spec: str) -> Callable:
@@ -131,7 +132,8 @@ async def improve(runner: Callable, improver: Callable, start: str, name: str, r
     for rnd in range(1, rounds + 1):
         t0 = time.time()
         playbook = open(current).read()
-        train = await evaluate_version(runner, current, "train", seeds=TRAIN_SEEDS, keep_sims=True, store_path=store_path)
+        train = await evaluate_version(runner, current, "train", n=N_TRAIN, seeds=TRAIN_SEEDS, keep_sims=True,
+                                     store_path=store_path)
         train_mean = float(np.mean([r["score"] for r in train.values()]))
         try:
             proposal = await _call(improver, playbook, worst_runs(train, store_path=store_path), history)
