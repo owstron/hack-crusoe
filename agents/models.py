@@ -43,7 +43,7 @@ ROLE_MAX_TOKENS: dict[str, int] = {
     "summarizer": 2048, "improver": 4096, "visual": 2048,
 }
 DEFAULT_TIMEOUT_S = 120.0
-MAIN_ENV = "/Users/owstron/code/crusoe-hackathon/hack-crusoe/.env"
+MAIN_ENV = str(Path(__file__).resolve().parent.parent / ".env")
 
 
 def _load_env() -> None:
