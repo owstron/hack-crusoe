@@ -1,0 +1,32 @@
+{
+  "question": "How should budget reallocation rules be adjusted to account for true incrementality and saturation, rather than relying solely on last-click attributed CPA, to maximize incremental conversions across channels with varying fatigue and holdout-validated incrementality?",
+  "effort": "lite",
+  "answer": "To shift from last-click CPA to true incrementality-based reallocation, adopt a \"Suite of Truth\" architecture:\n\n*   **Strategic Allocation (MMM):** Use Marketing Mix Modeling (e.g., Robyn, Meridian) to estimate channel-specific **saturation curves** (Hill/logistic functions) and calculate **marginal incremental ROAS (miROAS)** at current spend levels [[1, 2, 3]].\n*   **Causal Validation:** Anchor MMM priors with **geo-holdouts** or switchback tests to confirm causality, as MMM models correlation by default [[2, 4]].\n*   **Operational Rules:** Reallocate budget from channels where miROAS < target threshold to those with headroom. Move in **10\u201325% increments** to allow for algorithm recalibration and minimize fatigue [[1, 5, 6]].\n*   **Fatigue Management:** Monitor **frequency caps** and CTR decay as leading indicators of saturation; if frequency exceeds 2.5\u20133.0, shift budget to prospecting before CPA spikes [[5, 7, 8]].",
+  "sources": [
+    {
+      "url": "https://geeksforgrowth.com/incrementality-or-illusion-getting-past-last%E2%80%91click-in-90-days/",
+      "title": "Incrementality or Illusion: Getting Past Last\u2011Click in 90 Days ..."
+    },
+    {
+      "url": "https://stochasticminds.com/insights/marketing-mix-modeling/",
+      "title": "Marketing Mix Modeling Guide | Stochastic Minds"
+    },
+    {
+      "url": "https://www.digitalapplied.com/blog/marketing-mix-modeling-2026-mmm-vs-attribution-playbook",
+      "title": "Marketing Mix Modeling 2026: MMM vs Attribution Guide"
+    },
+    {
+      "url": "https://rankworks.com/news/marketing-mix-modeling-vs-attribution-which-to-use/",
+      "title": "Marketing Mix Modeling vs. Attribution: Which to Use | ... | RankWorks"
+    },
+    {
+      "url": "https://www.fieldtrip.agency/post/media-budget-allocation-search-to-social",
+      "title": "Media Budget Allocation: When to Reallocate Spend From Search to ..."
+    },
+    {
+      "url": "https://audiences.cloud/from-cpa-to-marginal-roi-a-practical-framework-to-capture-in",
+      "title": "From CPA to Marginal ROI: A Practical Framework"
+    }
+  ],
+  "seconds": 5.5
+}

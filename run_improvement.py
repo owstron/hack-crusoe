@@ -25,6 +25,7 @@ def main():
     p.add_argument("--improver", default="improve.stubs:propose_edit")
     p.add_argument("--margin", type=float, default=MARGIN)
     p.add_argument("--overwrite", action="store_true")
+    p.add_argument("--final-eval", action="store_true", help="after the loop, run the test split once: v1 vs final")
     p.add_argument("--db", default=DEFAULT_PATH, help="run store database")
     a = p.parse_args()
 
@@ -43,6 +44,16 @@ def main():
     for v in summary["versions"]:
         print(f"  round {v['round']}: {v['version']}  val {v['val_mean']:.3f}")
     print(f"final: {summary['final_version']}")
+    if a.final_eval:
+        from sim.final_eval import final_eval
+        first = summary["versions"][0]["version"]
+        r = asyncio.run(final_eval(load(a.runner), first, summary["final_version"],
+                                   out_path=os.path.join("runs", a.name, "final_eval.json"),
+                                   store_path=a.db, session=a.name))
+        print(f"test: v1 {r['v1_mean']:.3f} -> final {r['final_mean']:.3f}  diff {r['mean_diff']:+.3f} "
+              f"CI {r['ci95']}  W{r['wins']}/L{r['losses']}")
+    from report.build_page import build
+    print("report:", build(a.name, db_path=a.db))
 
 
 if __name__ == "__main__":
