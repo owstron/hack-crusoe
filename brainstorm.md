@@ -96,7 +96,7 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 **Person A: Environment and evaluation** (deterministic code). Owns simulator, generator, score, lift calculator, gate, final eval.
 **Person B: Agents and improvement** (model-facing code). Owns model client, agents, tools, playbook v1, improver, change log, results page.
 
-### Status (12:51)
+### Status (12:54)
 
 **Person A's code is done and pushed** (`sim/`):
 - `sim/interface.py`: the contract for B (plan, action and observation formats). Read this instead of the suggested interface below.
@@ -117,7 +117,28 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 
 **B keeps:** model client, planner, channel agents, verifier, playbook v1, improver prompt and call, trace view, backup demo video.
 
-**Blocked on B:** nothing can run end to end until `runner` and `propose_edit` exist (no agent code pushed as of 12:51). Version 1 score target: ~2:30.
+**Blocked on B:** nothing can run end to end until `runner` and `propose_edit` exist (no agent code pushed as of 12:54). Version 1 score target: ~2:30.
+
+**Revised timeline** (replaces the times in the sections below; we started ~1.5h behind):
+- ~2:30: Version 1 agents score on validation (A checks the score is well below 1.0)
+- 3:30 at the latest: full improvement run started (5-8 rounds, ~2 min each)
+- 4:15: feature freeze
+- 4:50: submit
+
+**Afternoon run order** (once B's `runner` and `propose_edit` exist):
+1. One campaign end to end: `Simulator(generate_campaigns(1, "train")[0], seed=0)` → `runner("playbooks/v1.md", sim)` → `score(sim)`.
+2. Version 1 on validation: `asyncio.run(evaluate_version(runner, "playbooks/v1.md", "validation"))`. Compare with `python -m sim.baselines` (naive ≈ 0.74).
+3. Full run: `.venv/bin/python run_improvement.py --name main --rounds 6 --runner agents.runner:run --improver agents.improver:propose_edit`, with `python -m report.build_page --name main --watch` in a second terminal.
+4. Final eval, once: `final_eval(runner, "runs/main/playbooks/v1.md", <final_version from runs/main/summary.json>, out_path="runs/main/final_eval.json")`, then rebuild the page.
+5. Commit `runs/main/` (playbooks, change log, final eval, page) so the results are in the public repo.
+
+**Simulator facts for B's prompts and for Q&A:**
+- Agents see only last-click metrics plus holdout results for line items they chose to test. Holdouts cost that share of true conversions.
+- Brand search is genuinely incremental in train/validation (0.60-0.90) but over-credited in test (0.00-0.25). The improver must learn "test cheap last-click items before scaling", not "brand is good".
+- Rotating creative is free; rotating weekly alone is worth ~+0.08. Expect it to be the first accepted edit.
+- Holdouts on small line items are noisy: the `conclusive` flag can be wrong (trap 6). Prompts shouldn't treat one week's holdout as proof.
+- The score uses expected (noise-free) conversions, so it depends only on the agents' decisions; noise is only in what agents observe.
+- Model-free reference points: equal split 0.74 / 0.73 / 0.59, naive last-click 0.76 / 0.74 / 0.56, smart holdout 0.90 / 0.92 / 0.92 (train / val / test). Oracle = 1.0.
 
 **Remaining for A:** check Version 1's agent score (if near 1.0, make traps harder), start the full run by 3:30 at the latest, watch it, final test eval, Q&A prep, README. Stretch: with/without-You.com comparison run (`YDC_DISABLED=1`).
 
