@@ -24,7 +24,7 @@ cp .env.example .env   # then add your keys
 ```bash
 # loop smoke test with model-free stubs
 .venv/bin/python run_improvement.py --name smoke --rounds 2
-# agent swarm (once agents.runner / agents.improver exist; see action_plan.md)
+# agent swarm (once agents.runner / agents.improver exist; see planning/action_plan.md)
 .venv/bin/python run_improvement.py --name main --rounds 6 \
     --runner agents.runner:run --improver agents.improver:propose_edit
 ```

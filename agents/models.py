@@ -1,6 +1,6 @@
 """Crusoe model routing + a recorded, retrying call helper.
 
-Role -> model mapping follows action_plan.md "Model routing" (IDs verified
+Role -> model mapping follows planning/action_plan.md "Model routing" (IDs verified
 against Crusoe /v1/models). Models are never switched silently: on failure the
 caller's explicit `fallback` value is returned with fallback_used=True.
 """
