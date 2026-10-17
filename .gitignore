@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# improvement loop smoke tests
+runs/stub-*
+runs/*.stub_v1.md

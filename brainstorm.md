@@ -96,14 +96,39 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 **Person A: Environment and evaluation** (deterministic code). Owns simulator, generator, score, lift calculator, gate, final eval.
 **Person B: Agents and improvement** (model-facing code). Owns model client, agents, tools, playbook v1, improver, change log, results page.
 
+### Status (12:40)
+
+**Person A's code is done and pushed** (`sim/`):
+- `sim/interface.py`: the contract for B (plan, action and observation formats). Read this instead of the suggested interface below.
+- `sim/simulator.py`: simulator with all 6 traps, `generate_campaigns`, `score`, `sim.debrief()` (hidden truth, train only). Holdout results include the lift estimate and 95% CI, so the lift calculator is built in.
+- `sim/baselines.py`: sanity check passes. Naive last-click 0.76 / 0.74 / **0.56** (train / val / test) vs smart holdout 0.90 / 0.92 / **0.92**. Naive collapses on the test-only brand trap.
+- `sim/gate.py`: paired gate on validation, 6 campaigns × 3 seeds = 18 pairs, 16 concurrent. Accepts if mean improvement > 0.01 **and** the 95% CI excludes 0. Agent crashes finish on autopilot and count as errors; >25% crashed runs means reject. Also serves as the parallel runner (`evaluate_version`).
+- `sim/final_eval.py`: Version 1 vs final on test, writes `results/final_eval.json` once (refuses to overwrite).
+
+**Plug-in points for B** (both sync or async; contract in `improve/loop.py`):
+- `runner(version, sim)`: plays a whole campaign. `version` = playbook path. Anything appended to `sim.trace` (e.g. agent reasoning) is shown to the improver.
+- `propose_edit(playbook, failures, history) -> {"new_playbook", "summary", "rationale", "sources"}` or `None` to stop. `failures` = the 3 worst train runs with hidden truth, weekly metrics and actions (~3k tokens). `history` = earlier proposals with accepted/rejected and score change.
+- Run: `.venv/bin/python run_improvement.py --name main --rounds 6 --runner agents.runner:run --improver agents.improver:propose_edit`. Without the two flags it runs model-free stubs (`improve/stubs.py`): 3 edits accepted, 1 rejected, test 0.56 → 0.92.
+
+**Moved from B to A** (A is free; these only depend on the pushed interfaces):
+1. Improvement loop driver + change log (`run_improvement.py`). The improver is a plug-in: B writes the prompt and model call.
+2. You.com research tool with disk cache.
+3. Results page (reads the change log and `results/final_eval.json`).
+
+**B keeps:** model client, planner, channel agents, verifier, playbook v1, improver prompt and call, trace view, backup demo video.
+
+**Remaining for A after that:** check Version 1's agent score (if near 1.0, make traps harder), watch the run, final test eval, Q&A prep, README.
+
+**Layout:** each improvement run lives in `runs/<name>/` (`playbooks/v1.md, v2.md, ...`, `candidates/`, `changelog.jsonl`), so a second run or the with/without-You.com comparison doesn't overwrite the first. The starting playbook is `playbooks/v1.md` (B).
+
 ### 10:45-11:00: both, agree on interfaces before splitting
 
-- [ ] Create the public repo, first commit (`.gitignore`, `requirements.txt`, README stub).
-- [ ] Agree on the simulator interface Person B codes against. Suggested:
+- [x] Create the public repo, first commit (`.gitignore`, `requirements.txt`, README stub).
+- [x] Agree on the simulator interface Person B codes against (done: `sim/interface.py`). Originally suggested:
   - `generate_campaigns(n, split, seed) -> list[Campaign]`
   - `sim = Simulator(campaign, seed)`; `sim.observe() -> dict` (visible metrics only); `sim.act(action) -> result`; `sim.step()` (advance one checkpoint); `sim.done`
   - `score(sim) -> float` (uses hidden truth)
-- [ ] Agree on the JSON formats for the media plan and for actions (shift_budget, pause, rotate_creative, set_holdout).
+- [x] Agree on the JSON formats for the media plan and for actions (shift_budget, pause, rotate_creative, set_holdout).
 - [ ] Agree on the playbook format: a markdown file of numbered rules the planner and channel agents read.
 
 ### 11:00-12:15
@@ -120,17 +145,18 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 
 - [ ] **Both:** connect agents to the real simulator. One campaign runs end to end.
 - [ ] **B:** verifier agent (definition of done at the start, check at the end).
-- [ ] **A:** parallel runner: many campaigns × seeds at once, 16 concurrent calls.
+- [x] **A:** parallel runner: many campaigns × seeds at once, 16 concurrent calls (`sim/gate.py: evaluate_version`).
 - [ ] **Milestone by ~1:45: Version 1 score on validation and test.** If Version 1 already scores near 1.0, the traps are too easy; A makes them harder.
 
 ### 1:45-3:00: improvement loop
 
 | Person A | Person B |
 |---|---|
-| Gate: paired comparison of N vs N+1 on validation, same seeds, accept margin | Improver agent: reads train failure traces, proposes one edit with a rationale |
-| Final eval script (test split, run once) | You.com research tool for the improver, with disk cache (30-45 min) |
-| | Change log (JSON lines: diff, sources, score change, accepted or rejected) |
-| | Loop: improve → gate → keep or revert → next round |
+| ~~Gate: paired comparison of N vs N+1 on validation, same seeds, accept margin~~ done | Improver agent: reads train failure traces, proposes one edit with a rationale |
+| ~~Final eval script (test split, run once)~~ done | |
+| You.com research tool for the improver, with disk cache (moved from B) | |
+| Change log (JSON lines: diff, sources, score change, accepted or rejected) (moved from B) | |
+| Loop: improve → gate → keep or revert → next round (moved from B) | |
 
 ### 3:00: start the full improvement run (5-8 rounds). Do not slip this.
 
@@ -138,7 +164,8 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 
 | Person A | Person B |
 |---|---|
-| Watch the run; fix crashes; if time, a second run to show the result repeats. Stretch: run an improver without You.com side by side and compare accepted edits and final test score | Results page (FastAPI or plain HTML, **not Streamlit**): score per version, accepted and rejected edits as diffs, final test before/after |
+| Watch the run; fix crashes; if time, a second run to show the result repeats. Stretch: run an improver without You.com side by side and compare accepted edits and final test score | |
+| Results page (FastAPI or plain HTML, **not Streamlit**): score per version, accepted and rejected edits as diffs, final test before/after (moved from B) | |
 | Final test-set evaluation: Version 1 vs final version | Trace view of one test campaign: Version 1 fooled by retargeting, final version not |
 
 ### 4:00-5:00: feature freeze
