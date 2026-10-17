@@ -28,6 +28,21 @@ cp .env.example .env   # then add your keys
     --runner agents.runner:run --improver agents.improver:propose_edit
 ```
 
+## Unified CLI
+
+`ad_swarm.py` runs the same agents on the simulator or on Meta. Every command first prints the backend, models, playbook, run and whether an ad-platform write will happen.
+
+```bash
+.venv/bin/python ad_swarm.py simulate improve --name main --rounds 6 --runner agents.runner:run --improver agents.improver:propose_edit
+.venv/bin/python ad_swarm.py simulate report --name main
+
+.venv/bin/python ad_swarm.py live create --dry-run          # paused objects only; --dry-run makes no Graph API calls
+.venv/bin/python ad_swarm.py live approve --run-id R --list # creatives stay pending until a human approves them
+.venv/bin/python ad_swarm.py live approve --run-id R --all
+.venv/bin/python ad_swarm.py live checkpoint --run-id R     # schedule externally; exits without acting when not yet due
+.venv/bin/python ad_swarm.py live activate --run-id R --yes # the only command that turns ads on
+```
+
 Environment: `CRUSOE_API_KEY` and `CRUSOE_URL` (models), `YDC_API_KEY` (research); `META_*` only for live mode.
 
 **Simulator score vs live metrics:** the simulator score comes from hidden ground truth and is the only thing that gates playbook changes. Live Meta metrics are platform-reported operational evidence; they never feed the gate, and simulator scores do not predict live results.

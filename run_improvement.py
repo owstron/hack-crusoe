@@ -16,7 +16,7 @@ from sim.gate import MARGIN
 from store import DEFAULT_PATH
 
 
-def main():
+def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--name", required=True, help="run directory under runs/")
     p.add_argument("--rounds", type=int, default=6)
@@ -28,7 +28,7 @@ def main():
     p.add_argument("--resume", action="store_true", help="continue an earlier --name from its last logged round")
     p.add_argument("--final-eval", action="store_true", help="after the loop, run the test split once: v1 vs final")
     p.add_argument("--db", default=DEFAULT_PATH, help="run store database")
-    a = p.parse_args()
+    a = p.parse_args(argv)
 
     load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
     if a.start == "playbooks/v1.md" and not os.path.exists(a.start) and a.runner.startswith("improve.stubs"):
