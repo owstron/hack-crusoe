@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import os
+import time
 import sys
 from typing import List, Optional
 
@@ -123,7 +124,8 @@ def cmd_live_create(a) -> int:
         product=a.product, avg_order_value=a.aov, total_budget=a.total_budget, n_checkpoints=a.checkpoints,
         interval_days=a.interval_days, read_delay_days=a.read_delay_days, attribution_window_days=a.attribution_window_days,
         start_date=a.start_date, max_total_spend=a.max_total_spend, max_period_spend=a.max_period_spend,
-        min_impressions=a.min_impressions, min_conversions=a.min_conversions).items() if v is not None}
+        min_impressions=a.min_impressions, min_conversions=a.min_conversions,
+        seconds_per_day=a.seconds_per_day).items() if v is not None}
     write = ("no (dry run)" if a.dry_run else "YES: creates a campaign and ad sets, all PAUSED; nothing is turned on")
     banner(command="live create", backend="Meta DRY RUN (no Graph API calls)" if a.dry_run else "Meta LIVE (Graph API)",
            models=_models(), playbook=a.playbook, account_run=f"{api.account_id} / new run", api_write=write)
@@ -193,9 +195,52 @@ def cmd_live_checkpoint(a) -> int:
             return 0
         state = run["state"] or runner.new_state()
         state = runner.run_checkpoint(run["playbook_version"], backend, state, store=store, run_id=a.run_id,
-                                      want_creatives=True)
+                                      want_creatives=True, echo=print)
+        _print_readings(backend, 0)
         print(f"stage {state['stage']}, errors {state['errors']}, next data due {state['due_at']}")
         return 0
+
+
+def _print_readings(backend, seen: int) -> int:
+    """Print readings in the backend history after the first `seen`; returns the new count."""
+    hist = backend.s["history"]
+    for h in hist[seen:]:
+        print(f"  reading cp{h['checkpoint']}.{h['read_no']} {h['period']['start']}..{h['period']['end']} [{h['status']}]")
+        for li, m in h["line_items"].items():
+            r = m["reported"]
+            print(f"    {li}: spend ${m['spend']:.2f}, {m['impressions']} imps, {m['clicks']} clicks, "
+                  f"{r['attributed_conversions']} conv, ROAS {r['roas']}")
+    return len(hist)
+
+
+def cmd_live_report(a) -> int:
+    from report.live_report import build
+    print("report:", build(a.run_id, a.db))
+    return 0
+
+
+def cmd_live_watch(a) -> int:
+    """Poll `checkpoint` until the campaign is done (time-compressed demos; otherwise schedule `checkpoint` externally)."""
+    from agents import runner
+    seen = 0
+    while True:
+        with Store(a.db) as store:
+            backend, run = _open(store, a.run_id)
+            if backend.done:
+                verdict = (run["state"] or {}).get("verdict")
+                print(f"campaign finished; verdict: {verdict}")
+                print("report:", __import__("report.live_report", fromlist=["build"]).build(a.run_id, a.db))
+                return 0
+            if backend.status == "awaiting_data":
+                seen = _print_readings(backend, seen)
+                print(f"[{time.strftime('%H:%M:%S')}] waiting for data (due {backend.due_at} schedule time)", flush=True)
+            else:
+                state = runner.run_checkpoint(run["playbook_version"], backend, run["state"] or runner.new_state(),
+                                              store=store, run_id=a.run_id, want_creatives=True, echo=print)
+                seen = _print_readings(backend, seen)
+                print(f"[{time.strftime('%H:%M:%S')}] checkpoint ran: stage {state['stage']}, errors {state['errors']}, "
+                      f"next data due {state['due_at']}", flush=True)
+        time.sleep(a.every)
 
 
 def cmd_live_activate(a) -> int:
@@ -236,7 +281,7 @@ def build_parser() -> argparse.ArgumentParser:
     for flag, typ in (("product", str), ("aov", float), ("total-budget", float), ("checkpoints", int),
                       ("interval-days", int), ("read-delay-days", int), ("attribution-window-days", int),
                       ("start-date", str), ("max-total-spend", float), ("max-period-spend", float),
-                      ("min-impressions", int), ("min-conversions", int)):
+                      ("min-impressions", int), ("min-conversions", int), ("seconds-per-day", float)):
         s.add_argument(f"--{flag}", type=typ, default=None)
     s = live.add_parser("approve", parents=[common], help="approve pending creatives (a human decision)")
     s.add_argument("--run-id", required=True)
@@ -244,9 +289,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--all", action="store_true")
     s.add_argument("--creative", action="append")
     for name, hlp in (("observe", "show the latest readings (no changes)"), ("checkpoint", "run one checkpoint if due"),
-                      ("activate", "turn ads on")):
+                      ("activate", "turn ads on"), ("report", "write runs/<run_id>/index.html"), ("watch", "run checkpoints as they fall due until the campaign is done")):
         s = live.add_parser(name, parents=[common], help=hlp)
         s.add_argument("--run-id", required=True)
+        if name == "watch":
+            s.add_argument("--every", type=float, default=5.0, help="seconds between polls")
         if name == "activate":
             s.add_argument("--yes", action="store_true", help="required: confirms delivery will start")
     return p
@@ -261,7 +308,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         if a.mode == "simulate":
             return {"run": cmd_sim_run, "report": cmd_sim_report}.get(a.cmd, lambda x: cmd_sim_improve(x, rest))(a)
         return {"create": cmd_live_create, "approve": cmd_live_approve, "observe": cmd_live_observe,
-                "checkpoint": cmd_live_checkpoint, "activate": cmd_live_activate}[a.cmd](a)
+                "checkpoint": cmd_live_checkpoint, "activate": cmd_live_activate,
+                "watch": cmd_live_watch, "report": cmd_live_report}[a.cmd](a)
     except CliError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2

@@ -38,6 +38,7 @@ DEFAULTS = {
     "attribution_window_days": 7,  # the platform's window; a period is provisional until it has closed
     "start_date": None,            # ISO date of period 1's first day (default: today)
     "max_total_spend": None, "max_period_spend": None,   # default: total_budget / period_budget
+    "seconds_per_day": None,       # time-compressed demo mode: one schedule "day" lasts this many real seconds
     "min_impressions": 500, "min_conversions": 5,        # per active ad set, below which an entry is provisional
 }
 
@@ -82,7 +83,7 @@ class MetaBackend:
 
     def __init__(self, store: Store, run_id: str, api: MetaAPI, state: dict, clock: Optional[Callable[[], dt.datetime]] = None):
         self.store, self.run_id, self.api, self.s = store, run_id, api, state
-        self.clock = clock or _utcnow
+        self.clock = clock or (self._scaled_clock if self.cfg.get("seconds_per_day") else _utcnow)
 
     # ---- construction ----
     @classmethod
@@ -97,6 +98,10 @@ class MetaBackend:
         cfg["max_period_spend"] = period if cfg["max_period_spend"] is None else cfg["max_period_spend"]
         cfg["start_date"] = cfg["start_date"] or now.date().isoformat()
         cfg["account_id"] = api.account_id
+        if cfg["seconds_per_day"]:
+            if cfg["seconds_per_day"] <= 0:
+                raise ValueError("seconds_per_day must be > 0")
+            cfg["start_date"], cfg["clock_anchor"] = _utcnow().date().isoformat(), _utcnow().isoformat()
         run_id = store.create_run("live", SCHEMA_VERSION, playbook_version, config={**cfg, "dry_run": api.dry_run},
                                   max_total_spend=cfg["max_total_spend"], campaign_ref=api.account_id, run_id=run_id)
         state = {"config": cfg, "checkpoint": 0, "plan_applied": False, "activated": False, "due_at": None,
@@ -119,6 +124,12 @@ class MetaBackend:
     @property
     def cfg(self) -> dict:
         return self.s["config"]
+
+    def _scaled_clock(self) -> dt.datetime:
+        """Compressed time: schedule time = midnight of start_date + real seconds since `clock_anchor` * (86400 / seconds_per_day)."""
+        elapsed = (_utcnow() - dt.datetime.fromisoformat(self.cfg["clock_anchor"])).total_seconds()
+        origin = dt.datetime.combine(dt.date.fromisoformat(self.cfg["start_date"]), dt.time())
+        return origin + dt.timedelta(seconds=elapsed * 86400 / self.cfg["seconds_per_day"])
 
     def _period(self, k: int) -> tuple:
         start = dt.date.fromisoformat(self.cfg["start_date"]) + dt.timedelta(days=self.cfg["interval_days"] * (k - 1))
@@ -433,7 +444,10 @@ class MetaBackend:
                     self.api.set_status(ad["ad_id"], "ACTIVE")
         except MetaError as e:
             return fail(f"Meta error while activating: {e}")
-        self.cfg["start_date"] = self.clock().date().isoformat()  # the schedule starts when delivery does
+        if self.cfg.get("seconds_per_day"):  # compressed time restarts at day 0 of the schedule
+            self.cfg["start_date"], self.cfg["clock_anchor"] = _utcnow().date().isoformat(), _utcnow().isoformat()
+        else:
+            self.cfg["start_date"] = self.clock().date().isoformat()  # the schedule starts when delivery does
         s["activated"] = True
         s["due_at"] = self._data_due(1).isoformat()
         self._save()

@@ -11,6 +11,7 @@ Model failures are recorded and the campaign continues on its current allocation
 from __future__ import annotations
 
 import copy
+import json
 import threading
 import traceback
 from typing import Callable, Optional
@@ -44,15 +45,30 @@ def _read_playbook(version: str) -> str:
         return f.read()
 
 
+def _brief(obj, limit: int = 160) -> str:
+    """One-line JSON for the narration; long creative text is cut."""
+    text = json.dumps(obj, default=str)
+    return text if len(text) <= limit else text[:limit - 3] + "..."
+
+
 class _Log:
     """Routes trace records to the run store (if given) and to the simulator's in-memory trace (if any)."""
 
-    def __init__(self, backend, store, run_id):
-        self.backend, self.store, self.run_id = backend, store, run_id
+    def __init__(self, backend, store, run_id, echo=None):
+        self.backend, self.store, self.run_id, self.echo = backend, store, run_id, echo
         self.sim = getattr(backend, "sim", None)
         self.idx = 0
 
+    def say(self, text: str) -> None:
+        if self.echo is not None:
+            self.echo(text)
+
     def model_call(self, rec: dict) -> None:
+        parsed = rec.get("parsed_json")
+        self.say(f"  {rec.get('role')} [{rec.get('model')}] {rec.get('latency_s') or 0:.1f}s"
+                 + (f", {rec['attempts']} attempts" if (rec.get("attempts") or 1) > 1 else "")
+                 + (f" ERROR {rec['error']}" + (" -> fallback" if rec.get("fallback_used") else "") if rec.get("error")
+                    else f" -> {_brief(parsed)}"))
         if self.store is not None:
             self.store.record_model_call({"run_id": self.run_id, **rec})
         elif self.sim is not None:
@@ -60,6 +76,7 @@ class _Log:
                                    "payload": rec, "ok": rec.get("error") is None, "error": rec.get("error")})
 
     def rejected(self, action, error: str) -> None:
+        self.say(f"  rejected {_brief(action)}: {error}")
         if self.store is not None:
             self.store.record_action(self.run_id, self.idx, {"_kind": "rejected", "action": action}, False, error)
         elif self.sim is not None:
@@ -67,10 +84,12 @@ class _Log:
                                    "ok": False, "error": error})
 
     def action(self, action: dict, result: dict) -> None:
+        self.say(f"  action {_brief(action)} -> " + ("ok" if result["ok"] else f"FAILED {result['error']}"))
         if self.store is not None:  # a simulator backend logs actions in its own trace; live backends rely on the store
             self.store.record_action(self.run_id, self.idx, action, result["ok"], result["error"])
 
     def error(self, text: str) -> None:
+        self.say(f"  error: {text.strip().splitlines()[-1]}")
         if self.store is not None:
             self.store.record_action(self.run_id, self.idx, {"_kind": "error"}, False, text[-2000:])
         elif self.sim is not None:
@@ -78,8 +97,9 @@ class _Log:
 
 
 def run_checkpoint(version: str, backend, state: dict, *, client=None, store=None, run_id: Optional[str] = None,
-                   want_creatives: bool = False) -> dict:
-    """Handle exactly one checkpoint and return the updated state (including `due_at`)."""
+                   want_creatives: bool = False, echo=None) -> dict:
+    """Handle exactly one checkpoint and return the updated state (including `due_at`). `echo(text)` narrates each
+    agent call and action as it happens (the CLI passes print)."""
     state = copy.deepcopy(state)
     if state["stage"] == "finished":
         return state
@@ -89,12 +109,14 @@ def run_checkpoint(version: str, backend, state: dict, *, client=None, store=Non
     playbook = _read_playbook(version)
     obs = backend.observe()
     campaign = obs["campaign"]
-    log = _Log(backend, store, run_id)
+    log = _Log(backend, store, run_id, echo)
     log.idx = idx = obs["checkpoint"]
 
     def recorder(ctx_read_no: int = 0):
         return lambda rec: log.model_call({"checkpoint_idx": idx, "read_no": ctx_read_no, **rec})
 
+    if echo:
+        echo(f"checkpoint {idx}: " + ("final verdict" if backend.done else "plan" if not state["plan_applied"] else "act"))
     if backend.done:
         if state["verdict"] is None:
             try:

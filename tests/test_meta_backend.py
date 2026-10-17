@@ -311,3 +311,24 @@ def test_runner_drives_a_full_dry_run_across_separate_loads(store, tmp_path):
     acts = [a for a in store.get_trace(run_id) if a["kind"] == "action"]
     assert acts[0]["action"]["_kind"] == "plan" and acts[0]["ok"]
     assert any(a["ok"] and a["action"].get("type") == "shift_budget" for a in acts)
+
+
+def test_compressed_time_schedule_follows_real_seconds(store, monkeypatch):
+    import backends.meta as meta
+    real = Clock(dt.datetime(2026, 3, 2, 9, 0, 0))
+    monkeypatch.setattr(meta, "_utcnow", real)
+    api = MetaAPI(account_id="act_1", page_id="p1", dry_run=True)
+    b = MetaBackend.create(store, api, {**CFG, "start_date": None, "interval_days": 1, "read_delay_days": 1,
+                                        "attribution_window_days": 1, "seconds_per_day": 10.0})
+    b.apply_plan(PLAN)
+    b.s["activated"] = True
+    b.cfg["clock_anchor"] = real().isoformat()  # as activate() does
+    b.s["due_at"] = b._data_due(1).isoformat()
+    assert b.status == "ready"  # checkpoint 0 -> 1 has no wait
+    b.s["checkpoint"] = 1
+    assert b.status == "awaiting_data"  # period 1 is day 1, data due at the end of day 2
+    real.now += dt.timedelta(seconds=19)
+    assert b.status == "awaiting_data"
+    real.now += dt.timedelta(seconds=2)
+    assert b.status == "ready"
+    assert MetaBackend.load(store, b.run_id, api).status == "ready"  # a fresh process derives the same clock
