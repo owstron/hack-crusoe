@@ -53,7 +53,8 @@ ACTION_TYPES = ("shift_budget", "pause", "rotate_creative", "set_holdout")
 
 # OBSERVATION (sim.observe()):
 # {
-#   "campaign": {"id", "product", "total_budget", "weekly_budget", "n_weeks", "line_items"},
+#   "campaign": {"id", "product", "total_budget", "weekly_budget", "n_weeks", "avg_order_value",
+#                "line_items", "attribution": {li: "7d_click_1d_view" | "last_click"}},
 #   "week": int,                 # weeks completed so far (0 before the first step)
 #   "weeks_left": int,
 #   "budgets": {li: dollars},    # weekly budget for the next week
@@ -61,9 +62,16 @@ ACTION_TYPES = ("shift_budget", "pause", "rotate_creative", "set_holdout")
 #   "history": [                 # one entry per completed week
 #     {"week": 1, "line_items": {li: {
 #         "spend": float,
-#         "attributed_conversions": int,       # last-click, noisy
-#         "cpa": float | None,                 # spend / attributed_conversions
-#         "creative_age_weeks": int,           # weeks since last rotation, at time of serving
+#         "attributed_conversions": int,       # platform-reported purchases (see "attribution"), noisy
+#         "cpa": float | None,                 # spend / attributed_conversions (cost per purchase)
+#         "attribution": str,                  # Meta: "7d_click_1d_view" (Meta's default); Google: "last_click"
+#         "impressions": int, "clicks": int,
+#         "reach": int | None,                 # Meta only (None for Google search)
+#         "frequency": float | None,           # impressions / reach; Meta only. Rises as spend saturates the audience
+#         "ctr": float | None,                 # percent, as Meta reports it (2.39 = 2.39%). Falls with frequency and creative age
+#         "cpm": float | None, "cpc": float | None,
+#         "purchase_value": float, "roas": float | None,   # attributed revenue and revenue / spend
+#         "creative_age_weeks": int,           # weeks since last rotation (the advertiser knows this; Meta does not report it)
 #         "holdout": None | {                  # cumulative since this holdout began
 #             "share": float, "weeks": int,
 #             "incremental_conversions_est": float,

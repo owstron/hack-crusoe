@@ -133,7 +133,8 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 5. Commit `runs/main/` (playbooks, change log, final eval, page) so the results are in the public repo.
 
 **Simulator facts for B's prompts and for Q&A:**
-- Agents see only last-click metrics plus holdout results for line items they chose to test. Holdouts cost that share of true conversions.
+- Agents see only platform-reported metrics plus holdout results for line items they chose to test. Holdouts cost that share of true conversions.
+- Each weekly row matches a Meta Insights / Google Ads row (added 13:50): impressions, reach, frequency, clicks, CTR (percent), CPM, CPC, purchases, CPA, purchase value, ROAS, plus the attribution label (Meta `7d_click_1d_view`, Google `last_click`). Medians match Triple Whale / WordStream benchmarks (sim_calibration.md section 2). Fatigue and saturation now show up the way marketers see them: frequency up, CTR down. Pitch line: "the agents see what Ads Manager shows."
 - Brand search is genuinely incremental in train/validation (0.60-0.90) but over-credited in test (0.00-0.25). The improver must learn "test cheap last-click items before scaling", not "brand is good".
 - Rotating creative is free; rotating weekly alone is worth ~+0.08. Expect it to be the first accepted edit.
 - Holdouts on small line items are noisy: the `conclusive` flag can be wrong (trap 6). Prompts shouldn't treat one week's holdout as proof.

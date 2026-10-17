@@ -42,6 +42,24 @@ Brand search gives us a second over-credit trap on Google. That provides the "tr
 
 The retargeting and brand ranges are our assumption, consistent with the sources' descriptions of these channels "looking" far better than they are. No source gives a single benchmark.
 
+**Simulator setting: delivery metrics** (added 2026-10-17 so each weekly row matches a Meta Insights / Google Ads row: impressions, reach, frequency, clicks, CTR, CPM, CPC, purchases, cost per purchase, purchase value, ROAS):
+
+| Line item | Setting | Basis |
+|---|---|---|
+| Meta prospecting | CPM $11.50-$21.80, CTR 1.9-3.0% | [B] Triple Whale ranges |
+| Meta retargeting | CPM $15-$30, CTR 2.0-3.5% | Our assumption: warm audiences cost more and click more |
+| Google non-brand | CPC $3.50-$7.50, CTR 4.5-8.5% | [B] WordStream ($5.26, 6.66%) |
+| Google brand | CPC $1-$3, CTR 15-30% | Our assumption: brand terms are cheap and high-intent |
+
+- **Attribution label:** Meta rows are `7d_click_1d_view` (Meta's default attribution setting, verified on our ad account's Insights API 2026-10-17); Google rows are `last_click`.
+- **Frequency:** each Meta line item has an audience sized so weekly frequency is ~1.58 at half-saturation spend K; reach = N·(1 − e^(−impressions/N)). Small-K line items (retargeting) hit frequency 3-4 when over-funded.
+- **CTR** falls with creative age (same decay as conversions) and with frequency above 1.58, as frequency^−0.43 ([B] Meta creative fatigue analysis, section 5).
+- **Conversion rate is not set directly**; it is conversions / clicks. Check across 60 campaigns at an equal budget split (week 1 medians): Meta prospecting CPM $15.62, CTR 2.49%, CPA $34, conversion rate 2.0% (benchmark 1.1-1.9%: slightly high); Google non-brand CPC $5.08, CTR 6.72%, conversion rate 8.0%, CPA $61 (benchmarks $5.26, 6.66%, 7.5-8.2%, $66-70).
+- Average order value per campaign: $60-$120, so purchase value and ROAS are reported too.
+- These metrics use a separate random stream: adding them did not change conversions, holdout results or any score.
+
+**Not modeled (say so if asked):** Meta reports lift through separate Conversion Lift studies with minimum sizes and end-of-study results, not a weekly running holdout like ours; and recent conversions keep arriving for up to 7 days (see the optional conversion-lag trap in section 6).
+
 ## 3. Hidden truth: what share of attributed conversions are incremental
 
 This is the core ground truth. `incrementality = true incremental conversions / last-click attributed conversions`.

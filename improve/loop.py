@@ -52,6 +52,7 @@ def summarize_run(row: dict) -> dict:
     for w in sim.history:
         weeks.append({"week": w["week"], "line_items": {li: {
             "spend": m["spend"], "attributed_conversions": m["attributed_conversions"], "cpa": m["cpa"],
+            "ctr": m.get("ctr"), "frequency": m.get("frequency"), "roas": m.get("roas"),
             "creative_age_weeks": m["creative_age_weeks"],
             **({"holdout_incremental_share": m["holdout"]["incremental_share_est"],
                 "holdout_ci95": m["holdout"]["ci95"]} if m["holdout"] else {}),
