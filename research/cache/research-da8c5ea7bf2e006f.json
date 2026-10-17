@@ -1,0 +1,32 @@
+{
+  "question": "why does retargeting show low incremental lift despite strong last-click CPA?",
+  "effort": "lite",
+  "answer": "Retargeting shows strong last-click CPA but low incremental lift due to **selection bias** and the difference between **correlation and causation** [[1, 2]]. \n\n1. **Selection Bias:** Retargeting targets \"high-intent\" users already deep in the funnel\u2014people who were likely to convert organically via direct or search traffic regardless of ad exposure [[3, 4]].\n2. **Attribution Illusion:** Last-click attribution falsely assigns 100% credit to the final ad seen before purchase [[5, 6]]. Incrementality testing (using holdouts) reveals that most \"attributed\" conversions would have occurred anyway, inflating ROAS by 2\u20135x [[6, 4]].",
+  "sources": [
+    {
+      "url": "https://www.signalbridgedata.com/blog/what-is-conversion-lift",
+      "title": "What is Conversion Lift? How to Measure True Ad Impact | SignalBridge ..."
+    },
+    {
+      "url": "https://kissmetrics.io/glossary/incrementality-testing",
+      "title": "Incrementality Testing: Definition and How to Track It | KISSmetrics"
+    },
+    {
+      "url": "https://www.cometly.com/post/incrementality-testing-for-marketing",
+      "title": "Incrementality Testing For Marketing: Complete Guide"
+    },
+    {
+      "url": "https://kissmetrics.io/blog/retargeting-incrementality",
+      "title": "Retargeting Incrementality: Did Those People Need the Ad?"
+    },
+    {
+      "url": "https://www.reddit.com/r/DigitalMarketing/comments/1sufuw9/lastclick_attribution_is_lying_to_you_about_which/",
+      "title": "r/DigitalMarketing on Reddit: Last-click attribution is lying to ..."
+    },
+    {
+      "url": "https://www.stackmatix.com/blog/retargeting-attribution-roi",
+      "title": "Retargeting Attribution and ROI: Measuring What Actually Works"
+    }
+  ],
+  "seconds": 7.8
+}

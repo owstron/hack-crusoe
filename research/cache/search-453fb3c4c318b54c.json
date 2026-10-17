@@ -1,0 +1,27 @@
+{
+  "question": "why does retargeting show low incremental lift despite strong last-click CPA?",
+  "answer": "- Last-Click Attribution Is Broken: Smarter Performance Measurement: If you\u2019re seeing retargeting campaigns deliver much lower cost per conversion than prospecting, but scaling prospecting doesn\u2019t increase audience inflow or pipeline, that\u2019s another red flag. Performance collapses when ads pause (or doesn\u2019t change much): If you pause a campaign and total conversions drop, that suggests the campaign was contributing incremental lifts. This is particularly useful when paid social or search looks weak in platform dashboards but strong in blended results or when branded search appears unstoppable. You want defensible proof before scaling spend ... Let\u2019s say you\u2019re spending $100,000/month on paid social. Platform-reported data shows a 4.0 ROAS and 2,000 attributed conversions. You run a conversion lift study on the platform, and the results show a 12% incremental lift, but only 800 conversions were incremental. Your reporting isn\u2019t revealing incremental impact, just attributing credit. This leads to budget increases for search at the expense of other activities that may be driving actual demand. Retargeting outperforms prospecting dramatically: Retargeting ads are a classic last-click \u201cwinner\u201d because they catch users who were already warm and at the brink of conversion. They eliminate selection bias common in retargeting and bottom-funnel segments. For large advertisers running high-spend search or programmatic campaigns, this method produces some of the most statistically reliable incrementality insights available.\n- Incrementality Testing For Ads: Measure True Impact: You might discover that your retargeting campaign shows 3x ROAS in attribution but only 30% incremental lift, while your prospecting campaign shows 2x ROAS but 80% incremental lift. The prospecting campaign is actually the better investment despite lower apparent ROAS. This doesn't mean you should eliminate retargeting entirely. It means you should right-size the budget based on true incremental value. Maybe retargeting deserves 20% of your budget instead of 50%. The freed-up budget can move to channels with stronger causal impact. When you're investing hundreds of thousands or millions of dollars monthly, even small improvements in efficiency create massive returns. If incrementality testing reveals that your $500,000 monthly retargeting budget is only generating 30% incremental lift, that insight could save you $350,000 in wasted spend or redirect it to channels with stronger causal impact. That person who clicked your retargeting ad and purchased 10 minutes later? They might have been heading to your site regardless. Incrementality testing is the methodology that finally answers this question. It's a controlled experiment approach that isolates the true lift your advertising creates versus the conversions that would have happened organically. When your retargeting campaign shows a 10x ROAS, it's often because you're targeting people who already visited your site, added items to their cart, and were likely to purchase anyway. The ad gets credit for the conversion, but did it actually cause the purchase, or did it just happen to be the last thing the customer saw before doing what they were already planning to do? This is where incremental lift becomes your most important metric.\n- Incrementality Testing For Paid Advertising Guide 2026: Your attribution dashboard might show a $15 CPA, but if incrementality testing reveals your true iCPA is $30, you've been overestimating campaign efficiency. Conversely, brand awareness campaigns might show a $50 CPA in attribution but an iCPA of $25 when you account for the incremental lift they provide across all channels. These conversions would have occurred regardless of your paid campaigns. Incrementality testing reveals this baseline, then measures how much your ads lifted results above that baseline. The power of this approach becomes clear when you consider retargeting campaigns. Retargeting might show 20% incrementality a",
+  "sources": [
+    {
+      "url": "https://www.nine.am/insights/last-click-attribution-problem",
+      "title": "Last-Click Attribution Is Broken: Smarter Performance Measurement"
+    },
+    {
+      "url": "https://www.cometly.com/post/incrementality-testing-for-ads",
+      "title": "Incrementality Testing For Ads: Measure True Impact"
+    },
+    {
+      "url": "https://www.cometly.com/post/incrementality-testing-for-paid-advertising",
+      "title": "Incrementality Testing For Paid Advertising Guide 2026"
+    },
+    {
+      "url": "https://asoworld.com/blog/aso-growth-hack-how-the-incrementality-measurement-drive-your-app-retargeting/",
+      "title": "ASO Growth Hack: How The Incrementality Measurement Drive Your ..."
+    },
+    {
+      "url": "https://www.signalbridgedata.com/blog/what-is-conversion-lift",
+      "title": "What is Conversion Lift? How to Measure True Ad Impact | SignalBridge ..."
+    }
+  ],
+  "seconds": 1.0
+}
