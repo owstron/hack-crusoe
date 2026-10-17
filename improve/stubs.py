@@ -52,16 +52,16 @@ def runner(version: str, sim) -> None:
             for li in LINE_ITEMS:
                 sim.act({"type": "rotate_creative", "line_item": li})
         if holdout:
-            if obs["week"] == 2:
-                pros_cpa = last["meta_prospecting"]["cpa"] or 1e9
+            if obs["checkpoint"] == 2:
+                pros_cpa = last["meta_prospecting"]["reported"]["cpa"] or 1e9
                 for li in suspects:
-                    share = last[li]["holdout"]["incremental_share_est"]
+                    share = last[li]["measured"]["holdout"]["incremental_share_est"]
                     sim.act({"type": "set_holdout", "line_item": li, "share": 0})
-                    if (last[li]["cpa"] or 1e9) / max(share, 0.01) > 1.5 * pros_cpa:
+                    if (last[li]["reported"]["cpa"] or 1e9) / max(share, 0.01) > 1.5 * pros_cpa:
                         sim.act({"type": "shift_budget", "from": li, "to": "meta_prospecting",
                                  "amount": 0.8 * sim.budgets[li]})
             continue
-        cpas = {li: m["cpa"] for li, m in last.items() if m["cpa"]}
+        cpas = {li: m["reported"]["cpa"] for li, m in last.items() if m["reported"]["cpa"]}
         if len(cpas) >= 2:
             best, worst = min(cpas, key=cpas.get), max(cpas, key=cpas.get)
             sim.act({"type": "shift_budget", "from": worst, "to": best,

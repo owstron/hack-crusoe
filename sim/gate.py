@@ -39,7 +39,7 @@ def _t95(df: int) -> float:
 
 
 async def _play(runner: Callable, version, sim: Simulator) -> Optional[str]:
-    """Run the agent; on any crash, finish remaining weeks on autopilot so the pair still scores."""
+    """Run the agent; on any crash, finish remaining checkpoints on autopilot so the pair still scores."""
     error = None
     try:
         if inspect.iscoroutinefunction(runner):
@@ -48,7 +48,7 @@ async def _play(runner: Callable, version, sim: Simulator) -> Optional[str]:
             await asyncio.to_thread(runner, version, sim)
     except Exception as e:  # agent/model failures must not kill the gate
         error = f"{type(e).__name__}: {e}"
-        sim.trace.append({"week": sim.week, "kind": "error", "error": traceback.format_exc()})
+        sim.trace.append({"checkpoint": sim.checkpoint, "kind": "error", "error": traceback.format_exc()})
     while not sim.done:  # agent returned early or crashed: keep current budgets
         sim.step()
     return error

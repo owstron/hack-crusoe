@@ -48,17 +48,18 @@ def summarize_run(row: dict) -> dict:
     """What the improver sees for one train run: score, hidden truth, observed metrics, agent actions."""
     sim = row["sim"]
     debrief = sim.debrief()
-    weeks = []
+    checkpoints = []
     for w in sim.history:
-        weeks.append({"week": w["week"], "line_items": {li: {
-            "spend": m["spend"], "attributed_conversions": m["attributed_conversions"], "cpa": m["cpa"],
-            "ctr": m.get("ctr"), "frequency": m.get("frequency"), "roas": m.get("roas"),
+        checkpoints.append({"checkpoint": w["checkpoint"], "period": w["period"], "status": w["status"], "line_items": {li: {
+            "spend": m["spend"], "attributed_conversions": m["reported"]["attributed_conversions"],
+            "cpa": m["reported"]["cpa"],
+            "ctr": m.get("ctr"), "frequency": m.get("frequency"), "roas": m["reported"]["roas"],
             **({"impression_share": m["search_impression_share"],
                 "budget_lost_impression_share": m["search_budget_lost_impression_share"]}
                if m.get("search_impression_share") is not None else {}),
-            "creative_age_weeks": m["creative_age_weeks"],
-            **({"holdout_incremental_share": m["holdout"]["incremental_share_est"],
-                "holdout_ci95": m["holdout"]["ci95"]} if m["holdout"] else {}),
+            "creative_age_checkpoints": m["creative_age_checkpoints"],
+            **({"holdout_incremental_share": m["measured"]["holdout"]["incremental_share_est"],
+                "holdout_ci95": m["measured"]["holdout"]["ci95"]} if m["measured"]["holdout"] else {}),
         } for li, m in w["line_items"].items()}})
     events = []
     for e in sim.trace:
@@ -73,7 +74,7 @@ def summarize_run(row: dict) -> dict:
         "agent_error": row["error"],
         "truth": debrief["line_items"],
         "achieved_vs_best": [debrief["achieved_incremental"], debrief["best_possible_incremental"]],
-        "weeks": weeks,
+        "checkpoints": checkpoints,
         "events": events,  # plan, actions (with ok/error), and anything the runner appends to sim.trace
     }
 

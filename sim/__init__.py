@@ -1,2 +1,2 @@
-from .interface import CHANNEL_OF, LINE_ITEMS, N_CHECKPOINTS, SPLITS
+from .interface import LINE_ITEMS, N_CHECKPOINTS, SCHEMA_VERSION, SPLITS
 from .simulator import Campaign, Simulator, generate_campaigns, score

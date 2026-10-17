@@ -16,7 +16,7 @@ import numpy as np
 
 from . import LINE_ITEMS
 from .gate import evaluate_version, paired_stats
-from .simulator import best_weekly_incremental
+from .simulator import best_period_incremental
 
 OUT_PATH = "results/final_eval.json"
 
@@ -27,10 +27,10 @@ def _spend_shares(sims) -> dict:
     optimal = {li: [] for li in LINE_ITEMS}
     for sim in sims:
         total = sum(w["line_items"][li]["spend"] for w in sim.history for li in LINE_ITEMS) or 1
-        _, best = best_weekly_incremental(sim.campaign)
+        _, best = best_period_incremental(sim.campaign)
         for li in LINE_ITEMS:
             actual[li].append(sum(w["line_items"][li]["spend"] for w in sim.history) / total)
-            optimal[li].append(best[li] / sim.campaign.weekly_budget)
+            optimal[li].append(best[li] / sim.campaign.period_budget)
     return {li: {"actual": round(float(np.mean(actual[li])), 3), "optimal": round(float(np.mean(optimal[li])), 3)}
             for li in LINE_ITEMS}
 

@@ -21,7 +21,7 @@ def naive_last_click(sim: Simulator) -> None:
     while not sim.done:
         sim.step()
         last = sim.observe()["history"][-1]["line_items"]
-        cpas = {li: m["cpa"] for li, m in last.items() if m["cpa"]}
+        cpas = {li: m["reported"]["cpa"] for li, m in last.items() if m["reported"]["cpa"]}
         if len(cpas) >= 2 and not sim.done:
             best, worst = min(cpas, key=cpas.get), max(cpas, key=cpas.get)
             sim.act({"type": "shift_budget", "from": worst, "to": best, "amount": 0.5 * sim.budgets[worst]})
@@ -29,7 +29,7 @@ def naive_last_click(sim: Simulator) -> None:
 
 def smart_holdout(sim: Simulator) -> None:
     """What a good playbook should converge to: prospecting-heavy start, holdout-test the cheap
-    last-click items for 2 weeks, fund by measured incremental CPA, rotate creative weekly."""
+    last-click items for 2 checkpoints, fund by measured incremental CPA, rotate creative every checkpoint."""
     suspects = ["meta_retargeting", "google_brand"]
     sim.apply_plan({
         "allocations": {"meta_prospecting": 0.45, "meta_retargeting": 0.15, "google_nonbrand": 0.25, "google_brand": 0.15},
@@ -42,13 +42,13 @@ def smart_holdout(sim: Simulator) -> None:
         obs = sim.observe()
         for li in LINE_ITEMS:
             sim.act({"type": "rotate_creative", "line_item": li})
-        if obs["week"] == 2:
+        if obs["checkpoint"] == 2:
             last = obs["history"][-1]["line_items"]
-            pros_cpa = last["meta_prospecting"]["cpa"] or 1e9
+            pros_cpa = last["meta_prospecting"]["reported"]["cpa"] or 1e9
             for li in suspects:
-                share = last[li]["holdout"]["incremental_share_est"]
+                share = last[li]["measured"]["holdout"]["incremental_share_est"]
                 sim.act({"type": "set_holdout", "line_item": li, "share": 0})
-                inc_cpa = (last[li]["cpa"] or 1e9) / max(share, 0.01)
+                inc_cpa = (last[li]["reported"]["cpa"] or 1e9) / max(share, 0.01)
                 if inc_cpa > 1.5 * pros_cpa:  # not worth it: move most of it to prospecting
                     sim.act({"type": "shift_budget", "from": li, "to": "meta_prospecting", "amount": 0.8 * sim.budgets[li]})
 

@@ -12,3 +12,8 @@ dependencies = [
     "requests>=2.34.2",
     "youdotcom>=3.6.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
