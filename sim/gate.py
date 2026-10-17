@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import os
 import time
 import traceback
 from typing import Callable, Dict, Optional, Sequence
@@ -25,7 +26,7 @@ N_CAMPAIGNS = 6
 SEEDS = (0, 1, 2)
 CAMPAIGN_SEED = 0  # campaign generation seed; fixed so every version sees the same campaigns
 MARGIN = 0.01      # candidate must beat base by more than this (mean paired score difference)
-CONCURRENCY = 16
+CONCURRENCY = int(os.environ.get("GATE_CONCURRENCY", "16"))
 
 # two-sided 95% t critical values by degrees of freedom (no scipy dependency)
 _T95 = {1: 12.71, 2: 4.30, 3: 3.18, 4: 2.78, 5: 2.57, 6: 2.45, 7: 2.36, 8: 2.31, 9: 2.26, 10: 2.23,

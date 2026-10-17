@@ -1,0 +1,32 @@
+{
+  "question": "What are the most effective operational mechanisms or automation triggers that ensure consistent 50% budget reallocation from highest-CPA to lowest-CPA line items at each checkpoint, while simultaneously enabling statistically valid holdout experiments (e.g., \u226510% budget, p<0.05) to measure incrementality and satisfy verifier requirements?",
+  "effort": "lite",
+  "answer": "To automate 50% budget reallocation while maintaining statistical rigor, integrate the following mechanisms:\n\n*   **Automation Triggers:** Deploy AI-driven rules that monitor hourly/daily CPA against targets. Trigger a **50% budget shift** when campaigns exceed target CPA by >30% for two consecutive days, reallocating funds to lower-CPA performers while keeping a \"safety floor\" to prevent total depletion [[1, 2, 3]].\n*   **Holdout Design:** Execute **geo-holdout experiments** (10-20% of budget/market) to isolate causal lift [[4, 5]]. Use **CUPED** to reduce variance and achieve p<0.05 without excessive duration [[6]].\n*   **Verification:** Pair automated rebalancing with **CAPI (Conversions API)** to ensure attribution data accuracy, preventing false-negative \"losing\" signals that trigger incorrect budget cuts [[7]].",
+  "sources": [
+    {
+      "url": "https://www.get-ryze.ai/blog/ai-automation-paid-advertising-budget-allocation",
+      "title": "AI Automation for Paid Advertising Budget Allocation (2026)"
+    },
+    {
+      "url": "https://toffu.ai/blog/budget-reallocation-automation-winning-campaigns",
+      "title": "The Daily Budget Shuffle: Why Smart Marketers Automate Campaign ..."
+    },
+    {
+      "url": "https://www.cometly.com/post/automated-marketing-budget-allocation",
+      "title": "Automated Marketing Budget Allocation: Setup Guide"
+    },
+    {
+      "url": "https://www.cometly.com/post/incrementality-testing-methodology",
+      "title": "Incrementality Testing Methodology: Complete Guide"
+    },
+    {
+      "url": "https://cdp.com/glossary/incrementality-testing/",
+      "title": "Incrementality Testing | CDP.com"
+    },
+    {
+      "url": "https://www.measured.com/faq/incremental-lift-analysis-practical-guide-iroas-confidence-intervals/",
+      "title": "Incremental Lift Analysis: A Practical Guide to Lift, iROAS, and ..."
+    }
+  ],
+  "seconds": 6.0
+}

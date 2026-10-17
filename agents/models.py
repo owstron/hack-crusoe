@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import random
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -43,6 +44,10 @@ ROLE_MAX_TOKENS: dict[str, int] = {
     "summarizer": 2048, "improver": 4096, "visual": 2048,
 }
 DEFAULT_TIMEOUT_S = 120.0
+# Process-wide cap on in-flight requests: parallel gate campaigns would otherwise trip Crusoe's 429 limits, and a
+# fallback silently degrades a gate comparison.
+MAX_IN_FLIGHT = int(os.environ.get("MODEL_CONCURRENCY", "6"))
+_in_flight = threading.BoundedSemaphore(MAX_IN_FLIGHT)
 MAIN_ENV = str(Path(__file__).resolve().parent.parent / ".env")
 
 
@@ -96,11 +101,11 @@ def _message_text(resp) -> str | None:
 def call_model(role: str, messages: list[dict], *, client=None,
                recorder: Callable[[dict], None] | None = None,
                schema_check: Callable[[Any], Any] | None = None,
-               max_retries: int = 2, fallback: Any = None,
+               max_retries: int = 6, fallback: Any = None,
                ctx: dict | None = None, expect: str = "object",
                max_tokens: int | None = None,
-               sleep: Callable[[float], None] = time.sleep,
-               backoff_base: float = 1.0) -> CallResult:
+               sleep: Callable[[float], None] | None = None,
+               backoff_base: float = 2.0) -> CallResult:
     """Call the model for `role`; retries transient errors, bad JSON and schema failures."""
     if role not in ROLE_MODELS:
         raise KeyError(f"unknown role {role!r}; known: {sorted(ROLE_MODELS)}")
@@ -124,9 +129,15 @@ def call_model(role: str, messages: list[dict], *, client=None,
         attempt += 1
         res.attempts = attempt
         try:
-            resp = client.chat.completions.create(**kwargs)
+            with _in_flight:
+                resp = client.chat.completions.create(**kwargs)
             res.raw = _message_text(resp)
-            parsed = extract_json(res.raw, expect)
+            if expect == "text":
+                if not (res.raw or "").strip():
+                    raise ExtractionError("empty reply")
+                parsed = res.raw.strip()
+            else:
+                parsed = extract_json(res.raw, expect)
             if schema_check is not None:
                 parsed = schema_check(parsed)
             res.parsed, res.ok, res.error = parsed, True, None
@@ -140,7 +151,7 @@ def call_model(role: str, messages: list[dict], *, client=None,
             if not _is_transient(e):
                 break
         if attempt <= max_retries:
-            sleep(min(30.0, backoff_base * 2 ** (attempt - 1)) + random.uniform(0, 0.25 * backoff_base))
+            (sleep or time.sleep)(min(30.0, backoff_base * 2 ** (attempt - 1)) + random.uniform(0, 0.25 * backoff_base))
     if not res.ok:
         res.parsed, res.fallback_used = fallback, True
     res.latency_s = time.monotonic() - t0

@@ -55,9 +55,8 @@ def propose_edit(playbook: str, failures: list, history: list, *, client=None,
     if len(context) > SUMMARIZE_AT:
         res = call_model("summarizer", [{"role": "system", "content": SUMMARIZER_SYSTEM},
                                         {"role": "user", "content": context[:60000]}],
-                         client=client, recorder=recorder, expect="any", schema_check=None, fallback=None, max_retries=1)
-        # the summarizer replies in prose, so a JSON parse failure is expected; use its raw text if present
-        context = res.raw.strip() if res.raw and res.raw.strip() else context[:SUMMARIZE_AT]
+                         client=client, recorder=recorder, expect="text", fallback=None, max_retries=2)
+        context = res.parsed if res.ok else context[:SUMMARIZE_AT]
     past = json.dumps([{k: h.get(k) for k in ("round", "summary", "accepted", "mean_diff", "reason")} for h in history])
     user = f"PLAYBOOK:\n{playbook}\n\nWORST RUNS:\n{context}\n\nHISTORY (earlier edits):\n{past}"
 
