@@ -72,6 +72,8 @@ def summarize_run(row: dict, store_path: Optional[str] = None) -> dict:
         if e["kind"] == "step":
             continue
         e = {k: v for k, v in e.items() if k != "observed"}
+        if e["kind"] == "model_call":  # keep what the model decided, not the full prompts
+            e["payload"] = {k: e["payload"].get(k) for k in ("role", "parsed_json", "fallback_used", "error")}
         if isinstance(e.get("error"), str):
             e["error"] = e["error"][-500:]
         events.append(e)

@@ -21,11 +21,13 @@ def persist_sim(store: Store, sim, *, split: str, score: float, playbook_version
         if e["kind"] == "step":
             obs = e["observed"]
             store.record_checkpoint(run_id, idx, obs, period=obs["period"], provisional=obs["status"] == "provisional")
-        elif e["kind"] in ("plan", "action"):
+        elif e["kind"] in ("plan", "action", "rejected"):
             payload = dict(e["payload"])
-            if e["kind"] == "plan":
-                payload["_kind"] = "plan"
+            if e["kind"] != "action":
+                payload["_kind"] = e["kind"]
             store.record_action(run_id, idx, payload, e["ok"], e["error"])
+        elif e["kind"] == "model_call":
+            store.record_model_call({"run_id": run_id, **e["payload"]})
         else:  # runner error entries
             store.record_action(run_id, idx, {"_kind": "error"}, False, e.get("error"))
     truth.save_score(store, run_id, split, score, sim.debrief() if with_debrief else None)
