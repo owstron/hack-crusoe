@@ -18,6 +18,20 @@ cp .env.example .env   # then add your keys
 .venv/bin/python smoke_test.py
 ```
 
+## Run a simulation
+
+```bash
+# loop smoke test with model-free stubs
+.venv/bin/python run_improvement.py --name smoke --rounds 2
+# agent swarm (once agents.runner / agents.improver exist; see action_plan.md)
+.venv/bin/python run_improvement.py --name main --rounds 6 \
+    --runner agents.runner:run --improver agents.improver:propose_edit
+```
+
+Environment: `CRUSOE_API_KEY` and `CRUSOE_URL` (models), `YDC_API_KEY` (research); `META_*` only for live mode.
+
+**Simulator score vs live metrics:** the simulator score comes from hidden ground truth and is the only thing that gates playbook changes. Live Meta metrics are platform-reported operational evidence; they never feed the gate, and simulator scores do not predict live results.
+
 ## What we built vs. third-party
 
 *To be filled in before submission.*
