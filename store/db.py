@@ -190,6 +190,17 @@ class Store:
                         "parsed": _load(r["parsed_json"]), "error": r["error"], "fallback_used": bool(r["fallback_used"])})
         return sorted(out, key=lambda e: e["event_id"])
 
+    # ---- backend state (live backends) ----
+    def save_backend_state(self, run_id: str, state: dict) -> None:
+        with self._txn() as c:
+            c.execute("INSERT INTO backend_state (run_id, state_json, updated_at) VALUES (?,?,?)"
+                      " ON CONFLICT (run_id) DO UPDATE SET state_json = excluded.state_json, updated_at = excluded.updated_at",
+                      (run_id, json.dumps(state), _now()))
+
+    def load_backend_state(self, run_id: str) -> Optional[dict]:
+        r = self.conn.execute("SELECT state_json FROM backend_state WHERE run_id = ?", (run_id,)).fetchone()
+        return None if r is None else json.loads(r["state_json"])
+
     # ---- creatives and external ids ----
     def save_creative(self, run_id: str, line_item: str, creative_id: str, content: dict,
                       status: str = "pending", meta_id: Optional[str] = None) -> None:

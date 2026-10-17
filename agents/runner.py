@@ -116,10 +116,11 @@ def run_checkpoint(version: str, backend, state: dict, *, client=None, store=Non
     state["stage"] = "running"
     state["due_at"] = backend.advance()["due_at"]
     if store is not None:
-        new = backend.observe()
-        if new["history"]:
-            h = new["history"][-1]
-            store.record_checkpoint(run_id, new["checkpoint"], h, period=h["period"], provisional=h["status"] == "provisional")
+        if not getattr(backend, "records_checkpoints", False):  # a live backend stores its own readings (with raw data)
+            new = backend.observe()
+            if new["history"]:
+                h = new["history"][-1]
+                store.record_checkpoint(run_id, new["checkpoint"], h, period=h["period"], provisional=h["status"] == "provisional")
         store.save_state(run_id, state, state["due_at"])
     return state
 

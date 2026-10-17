@@ -108,3 +108,11 @@ CREATE TABLE IF NOT EXISTS improvement (
     accepted INTEGER,
     PRIMARY KEY (session, seq)
 );
+
+-- Live backend bookkeeping (campaign/ad set ids, period boundaries, spend to date, ...). Separate from
+-- runs.state_json, which belongs to the agent runner.
+CREATE TABLE IF NOT EXISTS backend_state (
+    run_id TEXT PRIMARY KEY REFERENCES runs(run_id),
+    state_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
