@@ -1,0 +1,32 @@
+{
+  "question": "How can we accurately measure and validate the true incrementality of marketing channels at scale using holdout experiments or causal inference methods, and how should these measurements be integrated into budget allocation decisions to avoid optimizing for last-click attribution bias?",
+  "effort": "lite",
+  "answer": "To measure incrementality at scale, use **controlled holdout experiments** (e.g., geo-lift or audience holdouts) as the causal ground truth to isolate conversion lift from baseline organic activity [[1, 2, 3]]. \n\n**Integration for Budget Allocation:**\n1. **Calibrate Models:** Use incrementality test results as **Bayesian priors** to calibrate Marketing Mix Models (MMM), correcting for systematic attribution bias in observational data [[2, 4, 5]].\n2. **Triangulate:** Rely on **MTA** for tactical, granular optimizations (e.g., bidding) and **Incrementality** for strategic, board-level budget allocation to prevent over-investing in bottom-funnel channels that capture existing demand rather than creating new growth [[1, 6, 7]].\n3. **Scaling Protocols:** Implement graduated scaling (e.g., 25\u201350% spend increases) and monitor performance at each check-point to avoid saturating channels [[8]].",
+  "sources": [
+    {
+      "url": "https://www.aidigital.com/blog/how-to-measure-incrementality-in-marketing",
+      "title": "How to Measure Incrementality in Marketing Campaigns \u2014 AI Digital"
+    },
+    {
+      "url": "https://www.fospha.com/measurement-101/mmm-mta-incrementality-building-a-suite-of-truth",
+      "title": "MMM, MTA & Incrementality: Building your measurement system I Fospha ..."
+    },
+    {
+      "url": "https://mma.com/resources/analytic-fundamentals-what-is-marketing-incrementality/",
+      "title": "What Is Marketing Incrementality? | Ipsos MMA"
+    },
+    {
+      "url": "https://www.mlaia.com/blog-adtech-measurement-2026.html",
+      "title": "Measuring Ads Without the Cookie: MMM, Incrementality & Causal ..."
+    },
+    {
+      "url": "https://www.measured.com/faq/incrementality-attribution-mmm-decision-tree/",
+      "title": "Incrementality vs. Attribution vs. MMM: A Decision Tree for What ..."
+    },
+    {
+      "url": "https://www.adasight.com/blog/marketing-measurement-in-2026-attribution-mmm-and-incrementality",
+      "title": "Marketing Measurement 2026: Attribution, MMM & Incrementality"
+    }
+  ],
+  "seconds": 6.4
+}

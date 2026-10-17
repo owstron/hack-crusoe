@@ -67,6 +67,15 @@ to do when the condition is not met. A vague or cautious rule ("only after valid
 agents do nothing, and doing nothing scores worse than a plain reallocation rule. A rule that replaces a budget-moving
 rule must still move budget. WORST RUNS and HISTORY show budget moves per run: if an earlier edit made them drop to 0, its
 rules were not executable.
+Concretely, every rule must:
+- Name an action the agents have: the initial plan (budget shares, holdouts), shift_budget (with an amount or share),
+  pause, rotate_creative, set_holdout (share 0.05-0.5, or 0 to end it).
+- Say WHEN to take it, using only data the agents observe: reported CPA, ROAS, CTR, frequency (Meta), search
+  impression share and share lost to budget (Google), creative age, and holdout estimates (incremental_share_est with a
+  95% CI, often inconclusive on small line items).
+- Give a decision threshold that still works when evidence is noisy or inconclusive (e.g. act on the point estimate).
+  Holdouts cost conversions: say which line items get one and when it ends.
+- Never require verification, documentation, sign-off, or evidence the agents cannot produce.
 Reply with ONE JSON object: {"candidates": [{"new_playbook": "<the FULL revised playbook text>", "summary": "<5-10 words>",
 "rationale": "<why this should help>"}, ... three of them]}"""
 
@@ -83,6 +92,15 @@ EXECUTABLE RULES: the agents follow a rule only if they can apply it mechanicall
 State exact amounts, thresholds and which line item gives to which ("move 30% of X's budget to Y when ..."), and say what
 to do when the condition is not met. A vague or cautious rule makes the agents do nothing, and doing nothing scores worse
 than a plain reallocation rule. A rule that replaces a budget-moving rule must still move budget.
+Concretely, every rule must:
+- Name an action the agents have: the initial plan (budget shares, holdouts), shift_budget (with an amount or share),
+  pause, rotate_creative, set_holdout (share 0.05-0.5, or 0 to end it).
+- Say WHEN to take it, using only data the agents observe: reported CPA, ROAS, CTR, frequency (Meta), search
+  impression share and share lost to budget (Google), creative age, and holdout estimates (incremental_share_est with a
+  95% CI, often inconclusive on small line items).
+- Give a decision threshold that still works when evidence is noisy or inconclusive (e.g. act on the point estimate).
+  Holdouts cost conversions: say which line items get one and when it ends.
+- Never require verification, documentation, sign-off, or evidence the agents cannot produce.
 Reply with ONE JSON object: {"candidates": [{"new_playbook": "<the FULL revised playbook text>", "summary": "<5-10 words>",
 "rationale": "<why this should help>"}, ... three of them]}"""
 

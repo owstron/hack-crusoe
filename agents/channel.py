@@ -16,8 +16,7 @@ Reply with ONE JSON object and nothing else: {{"actions": [ ... ]}}  (an empty l
  {{"type": "rotate_creative", "line_item": "<yours>"}}   // attaches an already approved creative; fails if none is available
  {{"type": "set_holdout", "line_item": "<yours>", "share": <0 to end, else 0.05-0.5>}}   // only if capabilities.holdouts is true
 Rules: data marked "unavailable", null, or status "provisional" may be incomplete; do not make budget-moving
-decisions from provisional data. Platform-reported conversions are attributed, not proven incremental. Never
-exceed the campaign's spend limits. Actions that break the rules are rejected."""
+decisions from provisional data. Never exceed the campaign's spend limits. Actions that break the rules are rejected."""
 
 
 def decide(channel: str, line_items: List[str], playbook: str, obs: dict, *, client=None,

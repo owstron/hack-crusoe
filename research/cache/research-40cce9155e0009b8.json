@@ -1,0 +1,32 @@
+{
+  "question": "How can we adjust budget reallocation rules to incorporate true incrementality estimates (from holdout tests) and creative fatigue decay rates, rather than relying solely on last-click CPA, to avoid over-investing in attribution-inflated, fatigued channels while under-investing in high-incrementality prospects?",
+  "effort": "lite",
+  "answer": "To shift from last-click CPA to causal budget reallocation, integrate incrementality and fatigue metrics into your optimization framework:\n\n*   **Calibrate MMM with Experiments:** Use geo-holdout tests as \"Bayesian priors\" to calibrate Media Mix Models (MMM) [[1, 2]]. This anchors statistical regression to causal ground truth, allowing you to estimate saturation curves and diminishing returns for each channel [[3, 4]].\n*   **Establish Dynamic Reallocation Rules:** Set explicit, pre-committed thresholds: if a channel's incremental ROAS (iROAS) falls below a target floor, trigger automatic budget shifts to high-incrementality prospects [[5, 6]].\n*   **Quantify Creative Decay:** Monitor frequency-to-conversion correlation and creative lifespan. Use sustained competitive spend as a signal for creative health and rotate assets when performance deviates from your calibrated iROAS baseline [[7, 8, 9]].",
+  "sources": [
+    {
+      "url": "https://www.admarketplace.com/blog/how-incrementality-testing-can-save-your-media-budget",
+      "title": "How Incrementality Testing Can Save Your Media Budget"
+    },
+    {
+      "url": "https://www.aidigital.com/blog/media-mix-optimization-mmm-for-budget-allocation",
+      "title": "Media Mix Optimization: Using MMM for Smarter Budget Allocation"
+    },
+    {
+      "url": "https://prescientai.com/blog/holdout-testing",
+      "title": "Holdout testing: limits of point-in-time measurement"
+    },
+    {
+      "url": "https://info.measured.com/media-mix-modeling-faq-demo",
+      "title": "Incrementality-Powered Media Mix Modeling | Measured Demo"
+    },
+    {
+      "url": "https://www.magiclogix.com/theories/incrementality-testing/",
+      "title": "Incrementality Testing for Marketing Teams: A Practical Guide"
+    },
+    {
+      "url": "https://adlibrary.com/posts/holdout-test",
+      "title": "Holdout Test in 2026: Incrementality Measurement That Actually Works"
+    }
+  ],
+  "seconds": 8.3
+}

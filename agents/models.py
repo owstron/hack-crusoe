@@ -1,6 +1,6 @@
 """Crusoe model routing + a recorded, retrying call helper.
 
-Role -> model mapping follows action_plan.md "Model routing" (IDs verified
+Role -> model mapping follows planning/action_plan.md "Model routing" (IDs verified
 against Crusoe /v1/models). Models are never switched silently: on failure the
 caller's explicit `fallback` value is returned with fallback_used=True.
 """
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import random
+import sys
 import threading
 import time
 from dataclasses import dataclass
@@ -154,6 +155,8 @@ def call_model(role: str, messages: list[dict], *, client=None,
             if not _is_transient(e):
                 break
         if attempt <= max_retries:
+            print(f"  [{time.strftime('%H:%M:%S')}] {role} attempt {attempt}/{max_retries + 1} failed: "
+                  f"{(res.error or '')[:100]}; retrying", file=sys.stderr, flush=True)
             (sleep or time.sleep)(min(BACKOFF_CAP_S, backoff_base * 2 ** (attempt - 1)) + random.uniform(0, 0.25 * backoff_base))
     if not res.ok:
         res.parsed, res.fallback_used = fallback, True

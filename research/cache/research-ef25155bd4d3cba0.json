@@ -1,0 +1,32 @@
+{
+  "question": "How can we measure and adjust for channel-specific creative fatigue and attribution bias in real-time to ensure budget reallocations reflect true incrementality rather than last-click CPA, using holdout test data to validate that shifts produce \u226510% lift in incremental conversions with p<0.05?",
+  "effort": "lite",
+  "answer": "To measure incrementality and adjust for bias/fatigue, implement a continuous **holdout experimentation** framework anchored by statistical rigor (p<0.05) [[1, 2]].\n\n1.  **Measure:** Conduct randomized geo-holdout or user-level holdout tests to isolate causal lift, comparing conversion rates between exposed and control groups [[3, 4, 5]]. Use these tests to calibrate attribution models, moving beyond last-click to **incremental ROAS (iROAS)** [[6, 2]].\n2.  **Adjust:** Detect creative fatigue by monitoring asset-grain performance vs. baseline [[7]]. When iROAS decays or fails to meet the **\u226510% lift** threshold, trigger a creative refresh or reallocate budget toward channels with higher proven incremental impact [[8, 1, 9]].\n3.  **Validate:** Ensure tests are adequately powered (e.g., 5,000\u201310,000 users per group) to avoid false negatives, using p<0.05 to validate that budget shifts are driven by true incremental demand rather than random variance [[1, 2, 10]].",
+  "sources": [
+    {
+      "url": "https://www.cometly.com/post/incremental-lift-testing-methodology",
+      "title": "Incremental Lift Testing Methodology: Complete Guide"
+    },
+    {
+      "url": "https://improvado.io/blog/marketing-lift",
+      "title": "Marketing Lift: How to Measure True Campaign Impact (2026)"
+    },
+    {
+      "url": "https://www.cometly.com/post/incrementality-testing-for-marketing",
+      "title": "Incrementality Testing For Marketing: Complete Guide"
+    },
+    {
+      "url": "https://www.appier.com/en/blog/the-incrementality-imperative-a-comparative-analysis-of-measurement-tools",
+      "title": "The Incrementality Imperative: A Comparative Analysis of Measurement ..."
+    },
+    {
+      "url": "https://www.aidigital.com/blog/how-to-measure-incrementality-in-marketing",
+      "title": "How to Measure Incrementality in Marketing Campaigns \u2014 AI Digital"
+    },
+    {
+      "url": "https://www.measured.com/faq/incrementality-attribution-mmm-decision-tree/",
+      "title": "Incrementality vs. Attribution vs. MMM: A Decision Tree for What ..."
+    }
+  ],
+  "seconds": 4.9
+}
