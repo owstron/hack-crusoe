@@ -28,6 +28,15 @@ EDIT_SYSTEM = """You improve the PLAYBOOK of an ad-campaign agent team. Make exa
 diagnosed failure: add, replace or sharpen a single numbered rule. Keep every other rule, the numbering, and the style
 (short imperative rules, no code). The playbook must stay a plain numbered policy that works for any campaign; do not
 mention specific campaign ids, scores, or hidden-truth numbers. Do not repeat edits listed in HISTORY, especially rejected ones.
+Every rule must be EXECUTABLE by the agents in a 4-checkpoint campaign:
+- Name an action they have: the initial plan (budget shares, holdouts), shift_budget (with an amount or share),
+  pause, rotate_creative, set_holdout (share 0.05-0.5, or 0 to end it).
+- Say WHEN to take it, using only data the agents observe: reported CPA, ROAS, CTR, frequency (Meta),
+  search impression share and share lost to budget (Google), creative age, and holdout estimates
+  (incremental_share_est with a 95% CI, often inconclusive on small line items).
+- Give a decision threshold that still works when evidence is noisy or inconclusive (e.g. act on the point
+  estimate). Holdouts cost conversions: say which line items get one and when it ends.
+- Never require verification, documentation, sign-off, or evidence the agents cannot produce.
 Reply with ONE JSON object: {"new_playbook": "<the FULL revised playbook text>", "summary": "<5-10 words>", "rationale": "<why this should help>"}"""
 
 
