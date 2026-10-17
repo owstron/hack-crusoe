@@ -225,3 +225,10 @@ runs/*.stub_v1.md
 
 # macOS
 .DS_Store
+
+# Claude Code local session state
+.claude/
+
+# Generated run artifacts (live ad_swarm_full.py runs)
+ad_swarm.db
+runs.jsonl

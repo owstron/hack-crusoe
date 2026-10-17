@@ -1,0 +1,11 @@
+[project]
+name = "hack-crusoe"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "openai>=3.33.0",
+    "requests>=2.34.2",
+    "youdotcom>=3.6.0",
+]
