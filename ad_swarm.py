@@ -116,16 +116,20 @@ def _pending_note(store: Store, run_id: str) -> None:
         print(f"{len(pending)} creative(s) pending human approval: ad_swarm.py live approve --run-id {run_id} --list")
 
 
-def cmd_live_create(a) -> int:
-    from agents import runner
-    from backends import MetaBackend
-    api = _api(a.dry_run)
-    cfg = {k: v for k, v in dict(
+def _create_cfg(a) -> dict:
+    return {k: v for k, v in dict(
         product=a.product, avg_order_value=a.aov, total_budget=a.total_budget, n_checkpoints=a.checkpoints,
         interval_days=a.interval_days, read_delay_days=a.read_delay_days, attribution_window_days=a.attribution_window_days,
         start_date=a.start_date, max_total_spend=a.max_total_spend, max_period_spend=a.max_period_spend,
         min_impressions=a.min_impressions, min_conversions=a.min_conversions,
         seconds_per_day=a.seconds_per_day).items() if v is not None}
+
+
+def cmd_live_create(a) -> int:
+    from agents import runner
+    from backends import MetaBackend
+    api = _api(a.dry_run)
+    cfg = _create_cfg(a)
     write = ("no (dry run)" if a.dry_run else "YES: creates a campaign and ad sets, all PAUSED; nothing is turned on")
     banner(command="live create", backend="Meta DRY RUN (no Graph API calls)" if a.dry_run else "Meta LIVE (Graph API)",
            models=_models(), playbook=a.playbook, account_run=f"{api.account_id} / new run", api_write=write)
@@ -219,6 +223,18 @@ def cmd_live_report(a) -> int:
     return 0
 
 
+def cmd_live_run(a) -> int:
+    """Continuous: campaign after campaign (and playbook improvement) until Ctrl-C or `touch runs/STOP`."""
+    if not a.dry_run:
+        raise CliError("continuous mode is dry-run only for now: pass --dry-run (nothing is sent to Meta)")
+    cfg = _create_cfg(a)
+    banner(command="live run", backend="Meta DRY RUN (no Graph API calls), continuous", models=_models(),
+           playbook=a.playbook, account_run=f"act_dry / cycles until stopped (max {a.max_cycles or 'none'})",
+           api_write="no (dry run)" + (f"; improving playbook in simulator session {a.improve_session!r}" if a.improve_session else ""))
+    import live_loop
+    return live_loop.supervise(a, cfg, _api)
+
+
 def cmd_live_watch(a) -> int:
     """Poll `checkpoint` until the campaign is done (time-compressed demos; otherwise schedule `checkpoint` externally)."""
     from agents import runner
@@ -276,13 +292,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     live = mode.add_parser("live").add_subparsers(dest="cmd", required=True)
     s = live.add_parser("create", parents=[common], help="create a PAUSED campaign from the agents' plan")
-    s.add_argument("--playbook", default="playbooks/v1.md")
-    s.add_argument("--dry-run", action="store_true", help="no Graph API calls; same state and shapes")
-    for flag, typ in (("product", str), ("aov", float), ("total-budget", float), ("checkpoints", int),
-                      ("interval-days", int), ("read-delay-days", int), ("attribution-window-days", int),
-                      ("start-date", str), ("max-total-spend", float), ("max-period-spend", float),
-                      ("min-impressions", int), ("min-conversions", int), ("seconds-per-day", float)):
-        s.add_argument(f"--{flag}", type=typ, default=None)
+    r = live.add_parser("run", parents=[common], help="continuous: campaign after campaign until stopped (dry run only)")
+    r.add_argument("--every", type=float, default=5.0, help="seconds between polls")
+    r.add_argument("--max-cycles", type=int, default=None, help="stop after this many campaigns (default: never)")
+    r.add_argument("--improve-session", default=None,
+                   help="also improve the playbook in the simulator, in this session name (keeps going until stopped)")
+    for s in (s, r):
+        s.add_argument("--playbook", default="playbooks/v1.md")
+        s.add_argument("--dry-run", action="store_true", help="no Graph API calls; same state and shapes")
+        for flag, typ in (("product", str), ("aov", float), ("total-budget", float), ("checkpoints", int),
+                          ("interval-days", int), ("read-delay-days", int), ("attribution-window-days", int),
+                          ("start-date", str), ("max-total-spend", float), ("max-period-spend", float),
+                          ("min-impressions", int), ("min-conversions", int), ("seconds-per-day", float)):
+            s.add_argument(f"--{flag}", type=typ, default=None)
     s = live.add_parser("approve", parents=[common], help="approve pending creatives (a human decision)")
     s.add_argument("--run-id", required=True)
     s.add_argument("--list", action="store_true")
@@ -309,7 +331,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             return {"run": cmd_sim_run, "report": cmd_sim_report}.get(a.cmd, lambda x: cmd_sim_improve(x, rest))(a)
         return {"create": cmd_live_create, "approve": cmd_live_approve, "observe": cmd_live_observe,
                 "checkpoint": cmd_live_checkpoint, "activate": cmd_live_activate,
-                "watch": cmd_live_watch, "report": cmd_live_report}[a.cmd](a)
+                "watch": cmd_live_watch, "run": cmd_live_run, "report": cmd_live_report}[a.cmd](a)
     except CliError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
