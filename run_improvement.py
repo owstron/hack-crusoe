@@ -25,6 +25,7 @@ def main():
     p.add_argument("--improver", default="improve.stubs:propose_edit")
     p.add_argument("--margin", type=float, default=MARGIN)
     p.add_argument("--overwrite", action="store_true")
+    p.add_argument("--resume", action="store_true", help="continue an earlier --name from its last logged round")
     p.add_argument("--final-eval", action="store_true", help="after the loop, run the test split once: v1 vs final")
     p.add_argument("--db", default=DEFAULT_PATH, help="run store database")
     a = p.parse_args()
@@ -39,7 +40,7 @@ def main():
         print("NOTE: using model-free stubs from improve/stubs.py")
 
     summary = asyncio.run(improve(load(a.runner), load(a.improver), a.start, a.name, a.rounds, a.margin, a.overwrite,
-                                 a.db))
+                                 a.db, a.resume))
     print("\nversions:")
     for v in summary["versions"]:
         print(f"  round {v['round']}: {v['version']}  val {v['val_mean']:.3f}")

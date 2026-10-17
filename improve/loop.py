@@ -100,35 +100,70 @@ def _strip(scores: dict) -> dict:
     return {k: {"score": round(r["score"], 4), "error": r["error"]} for k, r in scores.items()}
 
 
+def _restore(changelog: List[dict]) -> dict:
+    """Rebuild the loop state from a session's change log (what `improve` logged before it stopped)."""
+    base = next((e for e in changelog if e.get("event") == "baseline"), None)
+    if base is None:
+        raise RuntimeError("nothing to resume: the session has no baseline entry")
+    current, base_scores = base["version"], base["val_scores"]
+    versions = [{"version": current, "round": 0, "val_mean": base["val_mean"]}]
+    history: List[dict] = []
+    for e in changelog:
+        if e.get("event") == "gate":
+            history.append({"round": e["round"], "summary": e.get("summary"), "accepted": e["accepted"],
+                            "mean_diff": round(e["mean_diff"], 4), "reason": e["reason"]})
+            if e["accepted"]:
+                current, base_scores = e["new_version"], e["val_scores"]
+                versions.append({"version": current, "round": e["round"], "val_mean": e["cand_mean"]})
+        elif e.get("event") == "empty_edit":
+            history.append({"round": e["round"], "summary": e.get("summary"), "accepted": False,
+                            "mean_diff": 0.0, "reason": "edit was empty or identical"})
+    return {"current": current, "base_scores": base_scores, "versions": versions, "history": history,
+            "last_round": max(e.get("round", 0) for e in changelog)}
+
+
 async def improve(runner: Callable, improver: Callable, start: str, name: str, rounds: int,
-                  margin: float = MARGIN, overwrite: bool = False, store_path: str = DEFAULT_PATH) -> dict:
+                  margin: float = MARGIN, overwrite: bool = False, store_path: str = DEFAULT_PATH,
+                  resume: bool = False) -> dict:
+    """With resume=True, continue an earlier session from its last logged round. A round that was cut off
+    before it logged anything is run again from its start."""
     root = os.path.join("runs", name)
-    if os.path.exists(root):
-        if not overwrite:
-            raise RuntimeError(f"{root} exists; pick a new --name or pass --overwrite")
-        shutil.rmtree(root)
-    os.makedirs(os.path.join(root, "playbooks"))
-    os.makedirs(os.path.join(root, "candidates"))
     store = Store(store_path)
-    store.start_session(name, overwrite=overwrite)
 
     def log(entry: dict):
         entry["time"] = time.strftime("%H:%M:%S")
         store.record_improvement(name, entry)
         print(json.dumps({k: v for k, v in entry.items() if k not in ("diff", "rationale", "val_scores")})[:300], flush=True)
 
-    current = os.path.join(root, "playbooks", "v1.md")
-    shutil.copy(start, current)
-    store.save_playbook(name, current, open(current).read())
-    t0 = time.time()
-    base_scores = await evaluate_version(runner, current, "validation", store_path=store_path)
-    base_mean = float(np.mean([r["score"] for r in base_scores.values()]))
-    versions = [{"version": current, "round": 0, "val_mean": base_mean}]
-    log({"round": 0, "event": "baseline", "version": current, "val_mean": round(base_mean, 4),
-         "val_scores": _strip(base_scores), "seconds": round(time.time() - t0, 1)})
+    if resume:
+        data = store.session_data(name)
+        if data is None or not os.path.isdir(root):
+            raise RuntimeError(f"nothing to resume under {root} / session {name!r}")
+        st = _restore(data["changelog"])
+        current, base_scores, versions, history = st["current"], st["base_scores"], st["versions"], st["history"]
+        first_round = st["last_round"] + 1
+        print(f"resuming {name} at round {first_round} from {current}", flush=True)
+    else:
+        if os.path.exists(root):
+            if not overwrite:
+                raise RuntimeError(f"{root} exists; pick a new --name or pass --overwrite")
+            shutil.rmtree(root)
+        os.makedirs(os.path.join(root, "playbooks"))
+        os.makedirs(os.path.join(root, "candidates"))
+        store.start_session(name, overwrite=overwrite)
+        current = os.path.join(root, "playbooks", "v1.md")
+        shutil.copy(start, current)
+        store.save_playbook(name, current, open(current).read())
+        t0 = time.time()
+        base_scores = await evaluate_version(runner, current, "validation", store_path=store_path)
+        base_mean = float(np.mean([r["score"] for r in base_scores.values()]))
+        versions = [{"version": current, "round": 0, "val_mean": base_mean}]
+        log({"round": 0, "event": "baseline", "version": current, "val_mean": round(base_mean, 4),
+             "val_scores": _strip(base_scores), "seconds": round(time.time() - t0, 1)})
+        history = []
+        first_round = 1
 
-    history: List[dict] = []
-    for rnd in range(1, rounds + 1):
+    for rnd in range(first_round, rounds + 1):
         t0 = time.time()
         playbook = open(current).read()
         train = await evaluate_version(runner, current, "train", seeds=TRAIN_SEEDS, keep_sims=True, store_path=store_path)
