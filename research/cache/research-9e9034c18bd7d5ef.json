@@ -1,0 +1,20 @@
+{
+  "question": "How can we measure and adjust for channel-specific attribution bias in last-click CPA using holdout-based incrementality tests to estimate true incremental CPA, especially when creative fatigue is present and frequency/exposure metrics are available?",
+  "effort": "lite",
+  "answer": "To estimate true incremental CPA and adjust for last-click bias under creative fatigue, follow these steps:\n\n1. **Calculate Incremental CPA**: Run a holdout experiment to isolate the lift. The formula is: **Incremental CPA = Total Ad Spend / (Test Group Conversions - Control Group Conversions)**.\n2. **Account for Fatigue**: Identify fatigue by tracking frequency alongside conversion rates; when high-frequency segments show declining conversion rates, incrementality drops, signaling the need for creative refreshes [[1, 2, 3]].\n3. **Calibrate**: Feed results into an incrementality-adjusted attribution model to replace biased last-click reporting with the causal lift coefficient.",
+  "sources": [
+    {
+      "url": "https://articles.myntagency.com/predicting-ad-fatigue/",
+      "title": "Predicting Ad Fatigue: When to Refresh Your Creative - Mynt Agency"
+    },
+    {
+      "url": "https://rocketium.ai/academy/all/creative-fatigue",
+      "title": "Creative fatigue: why it happens and how to beat it"
+    },
+    {
+      "url": "https://www.darkroomagency.com/observatory/creative-fatigue-performance-testing-framework",
+      "title": "Creative Fatigue Testing Framework for Paid Media 2026"
+    }
+  ],
+  "seconds": 5.9
+}

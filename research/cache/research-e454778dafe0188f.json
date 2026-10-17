@@ -1,0 +1,32 @@
+{
+  "question": "How can we design an automated, auditable budget reallocation mechanism that enforces 50% shifts from highest to lowest CPA line items at each checkpoint while dynamically adjusting for creative fatigue decay rates and ensuring budget totals match prescribed constraints, using only observable metrics (e.g., impression share, CPA trends, creative age) without relying on unobservable ground truth?",
+  "effort": "lite",
+  "answer": "To design an auditable reallocation mechanism, implement a **modular rules engine** that separates performance triggers from execution logic [[1, 2]].\n\n1.  **Metric Aggregation**: Establish a rolling 7-day window for CPA and CTR decay, utilizing \"creative age\" (days since launch) and frequency velocity as fatigue signals [[3, 2, 4]].\n2.  **Triggers**: Set a hard threshold (e.g., 15\u201325% CPA drift or 20% CTR drop from peak) to trigger a reallocation event [[5, 4]]. \n3.  **Reallocation Logic**: At defined checkpoints, shift 50% of the daily budget from the highest CPA segment to the lowest, provided the lowest remains below a \"performance floor\" to prevent \"rewarding\" ineffective ads [[6, 3, 7]]. \n4.  **Auditability**: Log every automated shift in a centralized ledger (e.g., BigQuery/Spreadsheet) documenting the *reason* (e.g., \"CPA > Threshold\") and the *impact* on overall budget compliance [[8, 1]].\n5.  **Constraints**: Use campaign-level budget isolation to ensure total daily spend remains within predefined financial caps [[9, 7]].",
+  "sources": [
+    {
+      "url": "https://improvado.io/blog/marketing-anomaly-detection-automated-alerts",
+      "title": "Marketing Anomaly Detection & Alerts Guide 2026"
+    },
+    {
+      "url": "https://adlibrary.com/posts/media-buying-automation-tools",
+      "title": "Media Buying Automation Tools: What to Use, What to Skip in 2026"
+    },
+    {
+      "url": "https://www.get-ryze.ai/blog/google-ads-budget-reallocation-strategy-scaling-pmax-search",
+      "title": "Google Ads Budget Reallocation: PMax vs Search Scaling 2026"
+    },
+    {
+      "url": "https://www.influencers-time.com/budgeting-for-creator-ad-fatigue-refresh-cadence-and-trigger/",
+      "title": "Creator Ad Fatigue: Budgeting, Refresh Cadence and Triggers"
+    },
+    {
+      "url": "https://www.influencers-time.com/creator-ad-wear-out-a-brand-refresh-pipeline-guide/",
+      "title": "Creator Ad Wear Out: Build a Brand Refresh Pipeline"
+    },
+    {
+      "url": "https://www.get-ryze.ai/blog/ai-automation-paid-advertising-budget-allocation",
+      "title": "AI Automation for Paid Advertising Budget Allocation (2026)"
+    }
+  ],
+  "seconds": 6.9
+}

@@ -1,0 +1,32 @@
+{
+  "question": "How can we measure and validate true incrementality of marketing channels in a way that is robust to attribution bias, creative fatigue, and platform reporting inconsistencies, using holdout experiments or causal inference methods suitable for frequent checkpoint-based budget reallocation?",
+  "effort": "lite",
+  "answer": "To measure true incrementality robust to bias, implement a **\"triangulated\" measurement system** where incrementality tests calibrate Marketing Mix Models (MMM) [[1, 2]].\n\n1.  **Causal Validation:** Use **geo-lift experiments** (matched markets) or **randomized holdouts** to establish a causal baseline (\"iROAS\") [[3, 4, 5]]. These identify if conversions are incremental or cannibalized organic demand [[5, 6]].\n2.  **Calibration:** Treat experiment results as **Bayesian priors** to anchor MMM coefficients, correcting for attribution bias and platform over-reporting [[1, 7, 2]].\n3.  **Execution:** Use MMM for quarterly strategic budget envelopes and MTA/in-platform data for weekly tactical optimization within those envelopes [[8, 9]].",
+  "sources": [
+    {
+      "url": "https://www.magiclogix.com/theories/incrementality-testing/",
+      "title": "Incrementality Testing for Marketing Teams: A Practical Guide"
+    },
+    {
+      "url": "https://liftlab.com/blog/incrementality-testing-for-cmos/",
+      "title": "What Is Incrementality Testing? A CMO Guide to Proving Marketing ROI"
+    },
+    {
+      "url": "https://skai.io/blog/how-to-measure-incrementality/",
+      "title": "How to Measure Incrementality: Determining the Impact of Marketing ..."
+    },
+    {
+      "url": "https://www.ekimetrics.com/articles/incrementality-testing-how-to-measure-what-marketing-actually-causes",
+      "title": "Incrementality testing: measure true marketing impact"
+    },
+    {
+      "url": "https://www.mv3marketing.com/glossary/incrementality-testing/",
+      "title": "Incrementality Testing \u2014 MV3 Marketing Glossary"
+    },
+    {
+      "url": "https://kissmetrics.io/glossary/incrementality-testing",
+      "title": "Incrementality Testing: Definition and How to Track It | KISSmetrics"
+    }
+  ],
+  "seconds": 6.0
+}

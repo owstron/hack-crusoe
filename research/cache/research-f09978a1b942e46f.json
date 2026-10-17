@@ -1,0 +1,32 @@
+{
+  "question": "How can incrementality be accurately measured and validated at the channel level using holdout groups to prevent budget reallocation based on misleading last-click attribution, especially when true incremental CPA diverges significantly from attributed CPA (e.g., meta_retargeting: attributed CPA 13.12 vs true incremental CPA 48.27)?",
+  "effort": "lite",
+  "answer": "To measure channel-level incrementality and correct misleading CPA, move from correlation-based attribution to **Randomized Controlled Trials (RCTs)** using holdout groups [[1, 2, 3]].\n\n1.  **Design:** Split your target audience (or geographic regions/DMAs) into a treatment group (exposed) and a holdout group (suppressed) [[4, 5]].\n2.  **Calculate:** Measure the conversion rate difference between groups:\n    *   **Incremental Conversions** = (Exposed Rate - Holdout Rate) \u00d7 Exposed Population [[6, 7]].\n    *   **True Incremental CPA** = Total Spend \u00f7 Incremental Conversions [[2, 8]].\n3.  **Validate:** Ensure the holdout is \"clean\" by preventing cross-channel contamination (e.g., ensuring suppressed users don't see retargeting elsewhere) [[9, 1]].\n4.  **Action:** Replace attributed CPA with **Incremental CPA** for budget allocation. If your Meta retargeting shows a $48.27 incremental CPA, reallocate budget to channels where the incremental CPA is closer to your target breakeven cost, as the $13.12 attributed CPA is likely capturing \"would-have-happened-anyway\" conversions [[2, 8]].",
+  "sources": [
+    {
+      "url": "https://www.aidigital.com/blog/how-to-measure-incrementality-in-marketing",
+      "title": "How to Measure Incrementality in Marketing Campaigns \u2014 AI Digital"
+    },
+    {
+      "url": "https://www.leadgen-economy.com/blog/incrementality-testing-lead-generation-guide/",
+      "title": "Incrementality Testing for Lead Marketing Spend: The Complete Guide"
+    },
+    {
+      "url": "https://www.attributionapp.com/blog/incrementality/",
+      "title": "Incrementality: When + How to Use It (and Not Use It)"
+    },
+    {
+      "url": "https://improvado.io/blog/incrementality-guide",
+      "title": "Marketing Incrementality: The Ultimate Guide to Measurement & Testing"
+    },
+    {
+      "url": "https://cdp.com/glossary/incrementality-testing/",
+      "title": "Incrementality Testing | CDP.com"
+    },
+    {
+      "url": "https://heypoplar.com/articles/incrementality-in-marketing",
+      "title": "Understanding Incrementality in Marketing | Poplar"
+    }
+  ],
+  "seconds": 6.6
+}
