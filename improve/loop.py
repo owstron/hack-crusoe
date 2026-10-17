@@ -157,6 +157,8 @@ async def improve(runner: Callable, improver: Callable, start: str, name: str, r
             "round": rnd, "event": "gate", "base_version": current, "candidate": cand,
             "summary": proposal.get("summary"), "rationale": proposal.get("rationale"),
             "sources": proposal.get("sources") or [],
+            **({"improver_calls": proposal["improver_calls"]} if proposal.get("improver_calls") else {}),
+            **({"diagnosis": proposal["diagnosis"]} if proposal.get("diagnosis") else {}),
             "diff": _diff(playbook, new_text, os.path.basename(current), f"round{rnd}.md"),
             "train_mean": round(train_mean, 4),
             **{k: gate[k] for k in ("accepted", "reason", "base_mean", "cand_mean", "mean_diff", "ci95",
