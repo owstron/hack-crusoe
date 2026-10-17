@@ -42,7 +42,7 @@ Brand search gives us a second over-credit trap on Google. That provides the "tr
 
 The retargeting and brand ranges are our assumption, consistent with the sources' descriptions of these channels "looking" far better than they are. No source gives a single benchmark.
 
-**Simulator setting: delivery metrics** (added 2026-10-17 so each weekly row matches a Meta Insights / Google Ads row: impressions, reach, frequency, clicks, CTR, CPM, CPC, purchases, cost per purchase, purchase value, ROAS):
+**Simulator setting: delivery metrics** (added 2026-10-17 so each weekly row matches a Meta Insights / Google Ads row: impressions, reach, frequency, clicks, CTR, CPM, CPC, purchases, cost per purchase, purchase value, ROAS, and Google impression share). Raw Google Ads research responses: `research/cache/` (Research API, standard effort):
 
 | Line item | Setting | Basis |
 |---|---|---|
@@ -51,7 +51,10 @@ The retargeting and brand ranges are our assumption, consistent with the sources
 | Google non-brand | CPC $3.50-$7.50, CTR 4.5-8.5% | [B] WordStream ($5.26, 6.66%) |
 | Google brand | CPC $1-$3, CTR 15-30% | Our assumption: brand terms are cheap and high-intent |
 
-- **Attribution label:** Meta rows are `7d_click_1d_view` (Meta's default attribution setting, verified on our ad account's Insights API 2026-10-17); Google rows are `last_click`.
+- **Attribution label:** each platform's default. Meta rows are `7d_click_1d_view` (verified on our ad account's Insights API 2026-10-17). Google rows are `data_driven`: data-driven attribution (`GOOGLE_SEARCH_ATTRIBUTION_DATA_DRIVEN`) is the default for new Google Ads conversion actions, not last click ([B] Google Ads API docs, *Conversions: getting started*, via You.com Research, standard effort). The over-credit traps still hold: data-driven attribution still credits brand clicks that would have happened anyway.
+- **Google impression share** (Google's saturation signal; search has no frequency): `search_impression_share`, `search_budget_lost_impression_share`, `search_rank_lost_impression_share`, as fractions like the Google Ads API (`metrics.search_*`). Impression share = (1 − rank-lost) · (1 − e^(−impressions/eligible)), with eligible searches sized so impression share at spend K is ~63% of the ceiling. Rank-lost is fixed per line item: brand 2-8%, non-brand 15-35% (our assumption). At an equal split, brand medians 92% impression share with 2% lost to budget (saturated: more budget buys little); non-brand 37% with 39% lost to budget.
+- **Units differ from the live APIs** (a live backend must convert): Google reports cost, average CPC and cost per conversion in micros, CTR as a fraction, and conversions can be fractional; we use dollars, CTR in percent (Meta's convention) and whole conversions.
+- **Brand vs non-brand:** Google Ads has no brand flag. Advertisers separate them by campaign structure (brand terms as negatives in non-brand campaigns), labels, or by classifying the search-terms report, so modeling them as two line items matches practice.
 - **Frequency:** each Meta line item has an audience sized so weekly frequency is ~1.58 at half-saturation spend K; reach = N·(1 − e^(−impressions/N)). Small-K line items (retargeting) hit frequency 3-4 when over-funded.
 - **CTR** falls with creative age (same decay as conversions) and with frequency above 1.58, as frequency^−0.43 ([B] Meta creative fatigue analysis, section 5).
 - **Conversion rate is not set directly**; it is conversions / clicks. Check across 60 campaigns at an equal budget split (week 1 medians): Meta prospecting CPM $15.62, CTR 2.49%, CPA $34, conversion rate 2.0% (benchmark 1.1-1.9%: slightly high); Google non-brand CPC $5.08, CTR 6.72%, conversion rate 8.0%, CPA $61 (benchmarks $5.26, 6.66%, 7.5-8.2%, $66-70).

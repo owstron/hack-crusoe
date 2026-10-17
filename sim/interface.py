@@ -54,7 +54,7 @@ ACTION_TYPES = ("shift_budget", "pause", "rotate_creative", "set_holdout")
 # OBSERVATION (sim.observe()):
 # {
 #   "campaign": {"id", "product", "total_budget", "weekly_budget", "n_weeks", "avg_order_value",
-#                "line_items", "attribution": {li: "7d_click_1d_view" | "last_click"}},
+#                "line_items", "attribution": {li: "7d_click_1d_view" | "data_driven"}},
 #   "week": int,                 # weeks completed so far (0 before the first step)
 #   "weeks_left": int,
 #   "budgets": {li: dollars},    # weekly budget for the next week
@@ -64,13 +64,16 @@ ACTION_TYPES = ("shift_budget", "pause", "rotate_creative", "set_holdout")
 #         "spend": float,
 #         "attributed_conversions": int,       # platform-reported purchases (see "attribution"), noisy
 #         "cpa": float | None,                 # spend / attributed_conversions (cost per purchase)
-#         "attribution": str,                  # Meta: "7d_click_1d_view" (Meta's default); Google: "last_click"
+#         "attribution": str,                  # each platform's default: Meta "7d_click_1d_view"; Google "data_driven"
 #         "impressions": int, "clicks": int,
 #         "reach": int | None,                 # Meta only (None for Google search)
 #         "frequency": float | None,           # impressions / reach; Meta only. Rises as spend saturates the audience
 #         "ctr": float | None,                 # percent, as Meta reports it (2.39 = 2.39%). Falls with frequency and creative age
 #         "cpm": float | None, "cpc": float | None,
 #         "purchase_value": float, "roas": float | None,   # attributed revenue and revenue / spend
+#         "search_impression_share": float | None,              # Google only, fraction 0-1: share of eligible searches shown.
+#         "search_budget_lost_impression_share": float | None,  #   Near the ceiling with ~0 lost to budget = saturated
+#         "search_rank_lost_impression_share": float | None,    #   (more budget buys little). None for Meta.
 #         "creative_age_weeks": int,           # weeks since last rotation (the advertiser knows this; Meta does not report it)
 #         "holdout": None | {                  # cumulative since this holdout began
 #             "share": float, "weeks": int,
@@ -82,3 +85,6 @@ ACTION_TYPES = ("shift_budget", "pause", "rotate_creative", "set_holdout")
 #     }}},
 #   ],
 # }
+# Units are unified across platforms (dollars; CTR in percent like Meta). A live Google Ads backend must
+# convert: metrics.cost_micros / average_cpc / cost_per_conversion are micros (/ 1e6), metrics.ctr is a
+# fraction (x 100), metrics.conversions can be fractional. Impression-share fields are fractions in both.

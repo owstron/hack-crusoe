@@ -1,0 +1,68 @@
+{
+  "question": "How do advertisers separate brand from non-brand search in Google Ads reporting (campaign structure, labels, or search term reports), and which Google Ads API fields identify it?",
+  "effort": "standard",
+  "answer": "## How advertisers separate brand vs. non-brand\n\n1. **Campaign/ad-group structure \u2014 most common and reliable**\n\n   Advertisers usually create separate campaigns or ad groups, for example:\n\n   - `Brand - Search`\n   - `Nonbrand - Search`\n   - `Competitor - Search`\n\n   Brand keywords are placed in the brand campaign; generic keywords go into non-brand campaigns. Campaign names are advertiser-defined metadata, so Google Ads does **not** infer that a campaign named \u201cBrand\u201d is actually brand traffic. In API reporting, use `campaign.id`, `campaign.name`, and\u2014if needed\u2014`ad_group.id`/`ad_group.name` to reproduce the account\u2019s convention. Search-term reporting supports campaign and ad-group attribution. [[1]] [[2]] \n\n   A common control is to add the brand as a negative keyword to non-brand campaigns, reducing overlap. In the API, campaign-level keyword exclusions are represented by `campaign_criterion.keyword.text`, `campaign_criterion.keyword.match_type`, and `campaign_criterion.negative = TRUE`. [[3]] [[4]] \n\n2. **Labels \u2014 explicit reporting metadata**\n\n   Advertisers may apply custom labels such as `Brand`, `Non-brand`, or `Competitor` to campaigns, ad groups, or keywords, then report/filter by label. Labels are custom categories, not Google\u2019s classification, and they are not inherited: a campaign label does not automatically apply to its ad groups or keywords. [[5]] [[6]] \n\n   API resources/fields include:\n\n   - `campaign_label.campaign`\n   - `campaign_label.label`\n   - `label.id`\n   - `label.name`\n\n   For lower-level tagging, use `ad_group_label` or `ad_group_criterion_label`. [[7]] [[8]] [[9]] \n\n3. **Search-term report \u2014 classify actual queries**\n\n   Advertisers can export the Search terms report and classify each actual query by whether it contains a company/product/competitor brand, usually using a maintained brand dictionary or regex rules. This is the best way to measure **actual branded demand**, because a broad-match generic keyword can trigger a branded query, and a brand campaign can sometimes receive non-brand queries. Google defines a search term as the user\u2019s actual query and separately reports the keyword that matched it. [[10]] \n\n   Relevant API fields are:\n\n   - `search_term_view.search_term` \u2014 actual query\n   - `campaign.id`, `campaign.name`\n   - `ad_group.id`, `ad_group.name`\n   - `segments.keyword.info.text` \u2014 matched keyword text\n   - `segments.keyword.info.match_type`\n   - `segments.keyword.ad_group_criterion`\n   - `search_term_view.status`\n   - `segments.search_term_match_type`\n   - `segments.search_term_targeting_status`\n\n   `segments.search_term_targeting_status` indicates whether the query was added, excluded, both, or neither: `ADDED`, `EXCLUDED`, `ADDED_EXCLUDED`, or `NONE`. It does **not** mean brand/non-brand. [[11]] [[12]]\n\n## Key API distinction\n\nThere is generally **no standard Google Ads API field named `is_brand` or `brand_vs_non_brand`** for ordinary Search query reporting. Brand/non-brand is normally an advertiser-defined classification derived from:\n\n- campaign/ad-group structure;\n- labels; or\n- text matching against `search_term_view.search_term`.\n\nA typical GAQL query is:\n\n```sql\nSELECT\n  campaign.id,\n  campaign.name,\n  ad_group.id,\n  ad_group.name,\n  search_term_view.search_term,\n  search_term_view.status,\n  segments.keyword.ad_group_criterion,\n  segments.keyword.info.text,\n  segments.keyword.info.match_type,\n  segments.search_term_match_type,\n  segments.search_term_targeting_status,\n  metrics.impressions,\n  metrics.clicks,\n  metrics.cost_micros,\n  metrics.conversions\nFROM search_term_view\nWHERE segments.date DURING LAST_30_DAYS\n```\n\n`search_term_view` is the standard granular Search query view; it does not include Performance Max data. For campaign-level Search/Shopping/PMax query reporting, Google also provides `campaign_search_term_view`, whose key field is `campaign_search_term_view.search_term`. [[1]] [[13]]\n\n## Native brand controls\u2014not the same as reporting classification\n\nGoogle\u2019s newer brand controls use a brand-list criterion, but this identifies a **targeting control**, not whether an individual query was branded:\n\n```text\ncampaign_criterion.brand_list.shared_set\ncampaign_criterion.negative\n```\n\nA brand list is a Shared Set of type `BRANDS`; positive lists restrict traffic to listed brands, while negative lists exclude them. [[14]] [[15]] [[16]] \n\nThus, for reporting, the usual implementation is: **report by campaign/labels, validate and refine with actual search terms, and maintain the brand dictionary or brand-list logic outside the API query.**",
+  "sources": [
+    {
+      "url": "https://developers.google.com/google-ads/api/fields/v22/search_term_view",
+      "title": "search_term_view \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/docs/query/cookbook",
+      "title": "Query Cookbook \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/fields/v26/campaign_criterion",
+      "title": "campaign_criterion \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/docs/campaigns/search-campaigns/getting-started",
+      "title": "Get started with Search campaigns \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://support.google.com/google-ads/answer/2475865?hl=en",
+      "title": "About ads labels - Google Ads Help"
+    },
+    {
+      "url": "https://support.google.com/google-ads/answer/7486653?hl=en",
+      "title": "Create, use, and manage labels - Google Ads Help"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/fields/v20/campaign_label",
+      "title": "campaign_label \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/fields/v26/label",
+      "title": "label \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/fields/v24/ad_group_criterion_label",
+      "title": "ad_group_criterion_label \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://support.google.com/google-ads/answer/2472708/about-the-search-terms-report",
+      "title": "About the search terms report - Google Ads Help"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/fields/v23/search_term_view",
+      "title": "search_term_view \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/reference/rpc/v23/SearchTermTargetingStatusEnum.SearchTermTargetingStatus",
+      "title": "SearchTermTargetingStatus \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/fields/v25/campaign_search_term_view",
+      "title": "campaign_search_term_view \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/fields/v22/campaign_criterion",
+      "title": "campaign_criterion \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    },
+    {
+      "url": "https://developers.google.com/google-ads/api/docs/campaigns/ai-max-for-search-campaigns/getting-started",
+      "title": "Get started with AI Max for Search campaigns \u00a0|\u00a0 Google Ads API \u00a0|\u00a0 Google for Developers"
+    }
+  ],
+  "seconds": 18.3
+}

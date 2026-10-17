@@ -53,6 +53,9 @@ def summarize_run(row: dict) -> dict:
         weeks.append({"week": w["week"], "line_items": {li: {
             "spend": m["spend"], "attributed_conversions": m["attributed_conversions"], "cpa": m["cpa"],
             "ctr": m.get("ctr"), "frequency": m.get("frequency"), "roas": m.get("roas"),
+            **({"impression_share": m["search_impression_share"],
+                "budget_lost_impression_share": m["search_budget_lost_impression_share"]}
+               if m.get("search_impression_share") is not None else {}),
             "creative_age_weeks": m["creative_age_weeks"],
             **({"holdout_incremental_share": m["holdout"]["incremental_share_est"],
                 "holdout_ci95": m["holdout"]["ci95"]} if m["holdout"] else {}),

@@ -53,11 +53,15 @@ DELIVERY = {
     "google_nonbrand": dict(cpc=(3.5, 7.5), ctr=(0.045, 0.085)),
     "google_brand": dict(cpc=(1.0, 3.0), ctr=(0.15, 0.30)),
 }
-# What the platform credits: Meta's default attribution setting vs Google last click.
+# What the platform credits: each platform's default. Meta: 7-day click / 1-day view. Google Ads:
+# data-driven attribution is the default for new conversion actions (GOOGLE_SEARCH_ATTRIBUTION_DATA_DRIVEN).
 ATTRIBUTION = {
     "meta_prospecting": "7d_click_1d_view", "meta_retargeting": "7d_click_1d_view",
-    "google_nonbrand": "last_click", "google_brand": "last_click",
+    "google_nonbrand": "data_driven", "google_brand": "data_driven",
 }
+# Google search impression share: the share of eligible searches you showed for, Google's saturation
+# signal (Meta's is frequency). The rest is lost to ad rank (a fixed ceiling) or to budget.
+SEARCH_RANK_LOST = {"google_nonbrand": (0.15, 0.35), "google_brand": (0.02, 0.08)}
 FREQ_AT_K = 1 / (1 - np.exp(-1))  # weekly frequency at half-saturation spend (~1.58)
 CTR_FREQ_EXPONENT = 0.43           # click likelihood ~ frequency^-0.43 (Meta creative fatigue analysis [B])
 
@@ -90,6 +94,7 @@ def generate_campaigns(n: int, split: str, seed: int = 0) -> List[Campaign]:
         raise ValueError(f"split must be one of {SPLITS}")
     rng = np.random.default_rng([seed, SPLIT_SALT[split]])
     rng_delivery = np.random.default_rng([seed, SPLIT_SALT[split], 1])  # separate stream: core truth unchanged
+    rng_search = np.random.default_rng([seed, SPLIT_SALT[split], 2])
     out = []
     for i in range(n):
         budget = float(round(rng.uniform(20_000, 100_000), -2))
@@ -114,7 +119,10 @@ def generate_campaigns(n: int, split: str, seed: int = 0) -> List[Campaign]:
                 # audience size such that weekly frequency at spend K is FREQ_AT_K
                 truth[li].update(cpm=cpm, ctr0=ctr0, audience=k_week / cpm * 1000)
             else:
-                truth[li].update(cpc=float(rng_delivery.uniform(*dv["cpc"])), ctr0=ctr0)
+                cpc = float(rng_delivery.uniform(*dv["cpc"]))
+                # eligible weekly searches such that impression share at spend K is ~63% of the rank ceiling
+                truth[li].update(cpc=cpc, ctr0=ctr0, eligible=k_week / cpc / ctr0,
+                                 rank_lost=float(rng_search.uniform(*SEARCH_RANK_LOST[li])))
         aov = float(round(rng_delivery.uniform(60, 120), 2))
         out.append(Campaign(f"{split}-{seed}-{i}", split, PRODUCTS[rng.integers(len(PRODUCTS))], budget, truth, aov))
     return out
@@ -123,12 +131,18 @@ def generate_campaigns(n: int, split: str, seed: int = 0) -> List[Campaign]:
 def _delivery(rng: np.random.Generator, t: dict, spend: float, age: int, conversions: int, aov: float) -> dict:
     """Impressions, reach, frequency, clicks, CTR, CPM, CPC, purchase value, ROAS for one week.
     Meta: frequency rises as spend saturates the audience; CTR falls with frequency and creative age.
-    Google search: no reach/frequency; CTR falls only with (small) creative fatigue."""
+    Google search: no reach/frequency; impression share rises toward the rank ceiling as spend grows;
+    CTR falls only with (small) creative fatigue."""
+    search = "cpm" not in t
     if spend <= 0:
-        return {"impressions": 0, "reach": 0 if "cpm" in t else None, "frequency": None, "clicks": 0,
-                "ctr": None, "cpm": None, "cpc": None, "purchase_value": 0.0, "roas": None}
+        return {"impressions": 0, "reach": None if search else 0, "frequency": None, "clicks": 0,
+                "ctr": None, "cpm": None, "cpc": None, "purchase_value": 0.0, "roas": None,
+                "search_impression_share": 0.0 if search else None,
+                "search_budget_lost_impression_share": round(1 - t["rank_lost"], 3) if search else None,
+                "search_rank_lost_impression_share": round(t["rank_lost"], 3) if search else None}
     fatigue = (1 - t["decay"]) ** age
-    if "cpm" in t:
+    imp_share = budget_lost = None
+    if not search:
         imps = int(rng.poisson(spend / t["cpm"] * 1000))
         n = t["audience"]
         reach = int(round(n * (1 - np.exp(-imps / n))))
@@ -138,6 +152,9 @@ def _delivery(rng: np.random.Generator, t: dict, spend: float, age: int, convers
         ctr = t["ctr0"] * fatigue
         imps = int(rng.poisson(spend / t["cpc"] / ctr))
         reach, freq = None, None
+        ceiling = 1 - t["rank_lost"]
+        imp_share = ceiling * (1 - np.exp(-imps / t["eligible"]))
+        budget_lost = ceiling - imp_share
     clicks = _nb(rng, imps * ctr)
     value = round(conversions * aov * float(np.clip(rng.normal(1, 0.05), 0.8, 1.2)), 2)
     return {
@@ -146,6 +163,10 @@ def _delivery(rng: np.random.Generator, t: dict, spend: float, age: int, convers
         "cpm": round(1000 * spend / imps, 2) if imps else None,
         "cpc": round(spend / clicks, 2) if clicks else None,
         "purchase_value": value, "roas": round(value / spend, 2),
+        # fractions, as the Google Ads API reports them (0.92 = 92%); None for Meta
+        "search_impression_share": round(imp_share, 3) if search else None,
+        "search_budget_lost_impression_share": round(budget_lost, 3) if search else None,
+        "search_rank_lost_impression_share": round(t["rank_lost"], 3) if search else None,
     }
 
 
