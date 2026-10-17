@@ -222,3 +222,6 @@ __marimo__/
 # improvement loop smoke tests
 runs/stub-*
 runs/*.stub_v1.md
+
+# macOS
+.DS_Store
