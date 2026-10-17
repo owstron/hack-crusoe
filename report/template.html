@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--REFRESH-->
+<title>Version N+1 Results</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --s-final: #2a78d6; --s-v1: #eb6834;
+  --good: #0ca30c; --good-text: #006300; --critical: #d03b3b;
+  --add-bg: rgba(12,163,12,0.10); --del-bg: rgba(208,59,59,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --s-final: #3987e5; --s-v1: #d95926; --good-text: #0ca30c;
+    --add-bg: rgba(12,163,12,0.18); --del-bg: rgba(208,59,59,0.20);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --s-final: #3987e5; --s-v1: #d95926; --good-text: #0ca30c;
+  --add-bg: rgba(12,163,12,0.18); --del-bg: rgba(208,59,59,0.20);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 17px; margin: 0 0 4px; }
+.sub { color: var(--ink-2); margin: 0 0 24px; max-width: 760px; }
+.note { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--ink-2); margin-left: 8px; vertical-align: middle; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.tile .label { color: var(--ink-2); font-size: 13px; }
+.tile .value { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; margin-top: 2px; }
+.tile .value .from { color: var(--muted); font-weight: 500; }
+.tile .delta { font-size: 13px; color: var(--good-text); font-weight: 600; }
+.tile .delta.neg { color: var(--critical); }
+.tile .ctx { color: var(--muted); font-size: 12px; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--ink-2); margin: 8px 0 4px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font-family: inherit; }
+.tick { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+.baseline { stroke: var(--axis); stroke-width: 1; }
+.dlabel { fill: var(--ink-2); font-size: 11px; font-variant-numeric: tabular-nums; }
+#tip { position: fixed; pointer-events: none; z-index: 10; max-width: 320px; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: none; }
+#tip b { display: block; margin-bottom: 2px; }
+.round { border-top: 1px solid var(--grid); padding: 16px 0; }
+.round:first-of-type { border-top: 0; padding-top: 4px; }
+.round-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+.round-head .rn { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; min-width: 60px; }
+.round-head .title { font-weight: 600; }
+.status { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid; }
+.status.ok { color: var(--good-text); border-color: var(--good); }
+.status.no { color: var(--critical); border-color: var(--critical); }
+.status.na { color: var(--muted); border-color: var(--axis); }
+.nums { color: var(--ink-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+.reason { color: var(--muted); font-size: 13px; margin: 4px 0 0 72px; }
+.rationale { color: var(--ink-2); font-size: 14px; margin: 6px 0 0 72px; white-space: pre-wrap; }
+.sources { margin: 6px 0 0 72px; font-size: 13px; }
+.sources a { color: var(--s-final); text-decoration: none; overflow-wrap: anywhere; }
+.sources a:hover { text-decoration: underline; }
+details { margin: 8px 0 0 72px; }
+summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
+pre.diff { margin: 8px 0 0; padding: 10px 0; background: var(--page); border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+pre.diff span { display: block; padding: 0 12px; white-space: pre; }
+pre.diff .a { background: var(--add-bg); }
+pre.diff .d { background: var(--del-bg); }
+pre.diff .h { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); }
+th { color: var(--ink-2); font-weight: 600; }
+@media (max-width: 640px) {
+  .reason, .rationale, .sources, details { margin-left: 0; }
+  .tile .value { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Version N+1 <span class="badge" id="status"></span></h1>
+  <p class="sub">An ad-campaign agent team rewrites its own playbook. Each proposed edit is kept only if a code gate measures an improvement on validation campaigns. The final version is then scored once on test campaigns it never saw. Score = true incremental conversions ÷ best possible, from the simulator's hidden truth, never from a model.</p>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section class="card" id="val-card">
+    <h2>Validation score per round</h2>
+    <p class="note">The line is the kept version's score. Each dot is one proposed edit, scored on the same 6 campaigns × 3 seeds.</p>
+    <div class="legend">
+      <span><svg width="22" height="12" viewBox="0 0 22 12" style="width:22px"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--s-final)" stroke-width="2"/></svg>Kept version</span>
+      <span><svg width="12" height="12" viewBox="0 0 12 12" style="width:12px"><circle cx="6" cy="6" r="4.5" fill="var(--s-final)" stroke="var(--surface)" stroke-width="2"/></svg>Edit accepted</span>
+      <span><svg width="12" height="12" viewBox="0 0 12 12" style="width:12px"><circle cx="6" cy="6" r="4" fill="var(--surface)" stroke="var(--muted)" stroke-width="2"/></svg>Edit rejected</span>
+    </div>
+    <div id="val-chart"></div>
+  </section>
+
+  <section class="card" id="test-card" hidden>
+    <h2>Test campaigns: where the budget went</h2>
+    <p class="note" id="test-note"></p>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--s-v1)"></i>Version 1</span>
+      <span><i class="sw" style="background:var(--s-final)"></i>Final version</span>
+      <span><svg width="12" height="14" viewBox="0 0 12 14" style="width:12px"><line x1="6" y1="0" x2="6" y2="14" stroke="var(--ink)" stroke-width="2"/></svg>Optimal (hidden truth)</span>
+    </div>
+    <div id="test-chart"></div>
+    <details><summary>Show as table</summary><div id="test-table"></div></details>
+  </section>
+
+  <section class="card">
+    <h2>Change log</h2>
+    <p class="note">Every edit the improver proposed, its sources, and the gate's verdict.</p>
+    <div id="log"></div>
+  </section>
+</main>
+<div id="tip"></div>
+<script>
+const DATA = /*DATA*/null;
+const LI_NAMES = { meta_prospecting: "Meta prospecting", meta_retargeting: "Meta retargeting", google_nonbrand: "Google non-brand search", google_brand: "Google brand search" };
+const NS = "http://www.w3.org/2000/svg";
+const fmt = (x, d = 3) => (x == null ? "–" : Number(x).toFixed(d));
+const sgn = (x, d = 3) => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(d);
+const pct = x => Math.round(x * 100) + "%";
+
+function el(tag, attrs = {}, text) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
+  return e;
+}
+function sv(tag, attrs = {}, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
+  return e;
+}
+const tip = document.getElementById("tip");
+function hover(target, lines) {
+  target.addEventListener("mouseenter", () => {
+    tip.replaceChildren();
+    lines.forEach((l, i) => tip.appendChild(el(i ? "div" : "b", {}, l)));
+    tip.style.display = "block";
+  });
+  target.addEventListener("mousemove", ev => {
+    const w = tip.offsetWidth;
+    tip.style.left = Math.min(ev.clientX + 14, window.innerWidth - w - 8) + "px";
+    tip.style.top = ev.clientY + 14 + "px";
+  });
+  target.addEventListener("mouseleave", () => (tip.style.display = "none"));
+}
+
+const log = DATA.changelog;
+const baseline = log.find(e => e.event === "baseline");
+const gates = log.filter(e => e.event === "gate");
+const fin = DATA.final_eval;
+
+// ---- status + tiles ----
+document.getElementById("status").textContent = (DATA.complete ? "Run complete" : "Run in progress") + " · " + DATA.name;
+const tiles = document.getElementById("tiles");
+function tile(label, value, from, delta, ctx) {
+  const t = el("div", { class: "tile" });
+  t.appendChild(el("div", { class: "label" }, label));
+  const v = el("div", { class: "value" });
+  if (from != null) { v.appendChild(el("span", { class: "from" }, from + " → ")); }
+  v.appendChild(document.createTextNode(value));
+  t.appendChild(v);
+  if (delta != null) t.appendChild(el("div", { class: "delta" + (delta.startsWith("−") ? " neg" : "") }, delta));
+  if (ctx) t.appendChild(el("div", { class: "ctx" }, ctx));
+  tiles.appendChild(t);
+}
+const kept = gates.filter(g => g.accepted);
+const lastVal = kept.length ? kept[kept.length - 1].cand_mean : (baseline ? baseline.val_mean : null);
+if (fin) {
+  tile("Test score (unseen campaigns)", fmt(fin.final_mean), fmt(fin.v1_mean), sgn(fin.mean_diff) + " (95% CI " + sgn(fin.ci95[0]) + " to " + sgn(fin.ci95[1]) + ")",
+       "Version 1 vs final · won " + fin.wins + " of " + fin.n_pairs + " paired runs");
+}
+if (baseline) tile("Validation score", fmt(lastVal), fmt(baseline.val_mean), lastVal != null ? sgn(lastVal - baseline.val_mean) : null, "decides which edits are kept");
+tile("Edits kept", kept.length + " of " + gates.length, null, null, (gates.length - kept.length) + " rejected by the gate");
+
+// ---- validation chart ----
+(function () {
+  const host = document.getElementById("val-chart");
+  if (!baseline) { host.appendChild(el("p", { class: "note" }, "Waiting for the baseline score…")); return; }
+  const W = 960, H = 300, m = { l: 44, r: 16, t: 12, b: 32 };
+  const rounds = [0, ...gates.map(g => g.round)];
+  const maxR = Math.max(1, ...rounds);
+  const vals = [baseline.val_mean, ...gates.map(g => g.cand_mean)];
+  let lo = Math.max(0, Math.floor((Math.min(...vals) - 0.03) * 20) / 20), hi = Math.min(1, Math.ceil((Math.max(...vals) + 0.03) * 20) / 20);
+  if (hi - lo < 0.1) hi = Math.min(1, lo + 0.1);
+  const x = r => m.l + (r / maxR) * (W - m.l - m.r);
+  const y = v => m.t + (1 - (v - lo) / (hi - lo)) * (H - m.t - m.b);
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Validation score per improvement round" });
+  const step = (hi - lo) > 0.3 ? 0.1 : 0.05;
+  for (let v = lo; v <= hi + 1e-9; v += step) {
+    svg.appendChild(sv("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: Math.abs(v - lo) < 1e-9 ? "baseline" : "gridline" }));
+    svg.appendChild(sv("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end", class: "tick" }, v.toFixed(2)));
+  }
+  for (let r = 0; r <= maxR; r++) svg.appendChild(sv("text", { x: x(r), y: H - 10, "text-anchor": "middle", class: "tick" }, r === 0 ? "v1" : "R" + r));
+  // kept-version step line
+  let cur = baseline.val_mean, d = `M${x(0)},${y(cur)}`;
+  for (const g of gates) { d += ` H${x(g.round)}`; if (g.accepted) { cur = g.cand_mean; d += ` V${y(cur)}`; } }
+  svg.appendChild(sv("path", { d, fill: "none", stroke: "var(--s-final)", "stroke-width": 2, "stroke-linejoin": "round" }));
+  // direct label at the end of the kept line
+  svg.appendChild(sv("text", { x: x(maxR) - 4, y: y(cur) - 10, "text-anchor": "end", class: "dlabel" }, "kept " + fmt(cur)));
+  const dots = [{ round: 0, v: baseline.val_mean, accepted: true, lines: ["Version 1 (starting playbook)", "Validation score " + fmt(baseline.val_mean)] }];
+  for (const g of gates) dots.push({ round: g.round, v: g.cand_mean, accepted: g.accepted, lines: [
+    "Round " + g.round + ": " + (g.summary || "edit"), (g.accepted ? "✓ Accepted" : "✗ Rejected") + " · " + fmt(g.base_mean) + " → " + fmt(g.cand_mean) + " (" + sgn(g.mean_diff) + ")",
+    "95% CI " + sgn(g.ci95[0]) + " to " + sgn(g.ci95[1]) + " · won " + g.wins + ", lost " + g.losses, g.reason] });
+  for (const p of dots) {
+    const c = p.accepted ? sv("circle", { cx: x(p.round), cy: y(p.v), r: 5, fill: "var(--s-final)", stroke: "var(--surface)", "stroke-width": 2 })
+                         : sv("circle", { cx: x(p.round), cy: y(p.v), r: 4.5, fill: "var(--surface)", stroke: "var(--muted)", "stroke-width": 2 });
+    svg.appendChild(c);
+    if (!p.accepted) svg.appendChild(sv("text", { x: x(p.round), y: y(p.v) + 18, "text-anchor": "middle", class: "dlabel" }, sgn(p.v - (gates.find(g => g.round === p.round).base_mean), 2)));
+    const hit = sv("circle", { cx: x(p.round), cy: y(p.v), r: 14, fill: "transparent" });
+    hover(hit, p.lines);
+    svg.appendChild(hit);
+  }
+  host.appendChild(svg);
+})();
+
+// ---- test spend chart ----
+(function () {
+  if (!fin) return;
+  document.getElementById("test-card").hidden = false;
+  const a = fin.v1_detail.spend_share_vs_optimal, b = fin.final_detail.spend_share_vs_optimal;
+  document.getElementById("test-note").textContent = "Average share of budget per line item across " + fin.n_pairs +
+    " test runs. Creative rotations per campaign: Version 1 " + fin.v1_detail.creative_rotations_per_campaign + ", final " + fin.final_detail.creative_rotations_per_campaign + ".";
+  const items = Object.keys(LI_NAMES);
+  const W = 960, rowH = 56, m = { l: 190, r: 56, t: 4, b: 24 }, H = m.t + items.length * rowH + m.b, bh = 16;
+  const max = Math.min(1, Math.ceil(Math.max(...items.flatMap(li => [a[li].actual, b[li].actual, a[li].optimal])) * 10) / 10);
+  const x = v => m.l + (v / max) * (W - m.l - m.r);
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Budget share per line item on test campaigns" });
+  for (let v = 0; v <= max + 1e-9; v += 0.1) {
+    svg.appendChild(sv("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b, class: v === 0 ? "baseline" : "gridline" }));
+    svg.appendChild(sv("text", { x: x(v), y: H - 6, "text-anchor": "middle", class: "tick" }, pct(v)));
+  }
+  items.forEach((li, i) => {
+    const y0 = m.t + i * rowH + 10;
+    svg.appendChild(sv("text", { x: m.l - 12, y: y0 + bh + 2, "text-anchor": "end", fill: "var(--ink-2)", "font-size": 13 }, LI_NAMES[li]));
+    [[a[li].actual, "var(--s-v1)", "Version 1"], [b[li].actual, "var(--s-final)", "Final version"]].forEach(([v, col, name], j) => {
+      const yy = y0 + j * (bh + 2), w = Math.max(0, x(v) - x(0));
+      // flat at the baseline, 4px rounded at the data end
+      const r = Math.min(4, w / 2);
+      svg.appendChild(sv("path", { d: `M${x(0)},${yy} H${x(0) + w - r} Q${x(0) + w},${yy} ${x(0) + w},${yy + r} V${yy + bh - r} Q${x(0) + w},${yy + bh} ${x(0) + w - r},${yy + bh} H${x(0)} Z`, fill: col }));
+      svg.appendChild(sv("text", { x: x(0) + w + 6, y: yy + bh - 4, class: "dlabel" }, pct(v)));
+      const hit = sv("rect", { x: x(0), y: yy - 1, width: Math.max(w, 24), height: bh + 2, fill: "transparent" });
+      hover(hit, [LI_NAMES[li], name + ": " + pct(v) + " of budget", "Optimal: " + pct(a[li].optimal)]);
+      svg.appendChild(hit);
+    });
+    const ox = x(a[li].optimal);
+    svg.appendChild(sv("line", { x1: ox, x2: ox, y1: y0 - 4, y2: y0 + 2 * bh + 6, stroke: "var(--surface)", "stroke-width": 5 }));
+    svg.appendChild(sv("line", { x1: ox, x2: ox, y1: y0 - 4, y2: y0 + 2 * bh + 6, stroke: "var(--ink)", "stroke-width": 2 }));
+  });
+  document.getElementById("test-chart").appendChild(svg);
+  const t = el("table");
+  const hr = el("tr"); ["Line item", "Version 1", "Final", "Optimal"].forEach(h => hr.appendChild(el("th", {}, h))); t.appendChild(hr);
+  items.forEach(li => { const r = el("tr"); [LI_NAMES[li], pct(a[li].actual), pct(b[li].actual), pct(a[li].optimal)].forEach(c => r.appendChild(el("td", {}, c))); t.appendChild(r); });
+  document.getElementById("test-table").appendChild(t);
+})();
+
+// ---- change log ----
+(function () {
+  const host = document.getElementById("log");
+  const rows = log.filter(e => e.event !== "baseline");
+  if (!rows.length) { host.appendChild(el("p", { class: "note" }, "No rounds yet.")); return; }
+  for (const e of rows) {
+    const r = el("div", { class: "round" });
+    const head = el("div", { class: "round-head" });
+    head.appendChild(el("span", { class: "rn" }, "Round " + e.round));
+    if (e.event === "gate") {
+      head.appendChild(el("span", { class: "status " + (e.accepted ? "ok" : "no") }, e.accepted ? "✓ Accepted" : "✗ Rejected"));
+      head.appendChild(el("span", { class: "title" }, e.summary || "edit"));
+      head.appendChild(el("span", { class: "nums" }, fmt(e.base_mean) + " → " + fmt(e.cand_mean) + " (" + sgn(e.mean_diff) + ") · W" + e.wins + "/L" + e.losses + (e.new_version ? " · saved as " + e.new_version.split("/").pop() : "")));
+      r.appendChild(head);
+      r.appendChild(el("div", { class: "reason" }, "Gate: " + e.reason));
+      if (e.rationale) r.appendChild(el("div", { class: "rationale" }, e.rationale));
+      if (e.sources && e.sources.length) {
+        const s = el("div", { class: "sources" });
+        e.sources.forEach((src, i) => {
+          const url = typeof src === "string" ? src : src.url, title = typeof src === "string" ? src : (src.title || src.url);
+          if (i) s.appendChild(document.createTextNode(" · "));
+          if (/^https?:\/\//.test(url || "")) s.appendChild(el("a", { href: url, target: "_blank", rel: "noopener" }, title));
+          else s.appendChild(document.createTextNode(title));
+        });
+        r.appendChild(s);
+      }
+      if (e.diff) {
+        const det = el("details"); det.appendChild(el("summary", {}, "Playbook diff"));
+        const pre = el("pre", { class: "diff" });
+        e.diff.split("\n").forEach(line => {
+          if (!line) return;
+          const cls = line.startsWith("+++") || line.startsWith("---") || line.startsWith("@@") ? "h" : line[0] === "+" ? "a" : line[0] === "-" ? "d" : "";
+          pre.appendChild(el("span", cls ? { class: cls } : {}, line));
+        });
+        det.appendChild(pre); r.appendChild(det);
+      }
+    } else {
+      head.appendChild(el("span", { class: "status na" }, e.event.replace("_", " ")));
+      head.appendChild(el("span", { class: "title" }, e.summary || e.error || ""));
+      r.appendChild(head);
+    }
+    host.appendChild(r);
+  }
+})();
+</script>
+</body>
+</html>

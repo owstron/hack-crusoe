@@ -96,7 +96,7 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 **Person A: Environment and evaluation** (deterministic code). Owns simulator, generator, score, lift calculator, gate, final eval.
 **Person B: Agents and improvement** (model-facing code). Owns model client, agents, tools, playbook v1, improver, change log, results page.
 
-### Status (12:40)
+### Status (12:51)
 
 **Person A's code is done and pushed** (`sim/`):
 - `sim/interface.py`: the contract for B (plan, action and observation formats). Read this instead of the suggested interface below.
@@ -110,14 +110,16 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 - `propose_edit(playbook, failures, history) -> {"new_playbook", "summary", "rationale", "sources"}` or `None` to stop. `failures` = the 3 worst train runs with hidden truth, weekly metrics and actions (~3k tokens). `history` = earlier proposals with accepted/rejected and score change.
 - Run: `.venv/bin/python run_improvement.py --name main --rounds 6 --runner agents.runner:run --improver agents.improver:propose_edit`. Without the two flags it runs model-free stubs (`improve/stubs.py`): 3 edits accepted, 1 rejected, test 0.56 → 0.92.
 
-**Moved from B to A** (A is free; these only depend on the pushed interfaces):
-1. Improvement loop driver + change log (`run_improvement.py`). The improver is a plug-in: B writes the prompt and model call.
-2. You.com research tool with disk cache.
-3. Results page (reads the change log and `results/final_eval.json`).
+**Moved from B to A, all three done and tested with model-free stubs:**
+1. ✅ Improvement loop driver + change log (`run_improvement.py`, `improve/loop.py`). The improver is a plug-in: B writes the prompt and model call.
+2. ✅ You.com tool (`improve/research.py`): `research(q)` (Research API, ~8s) and `search(q)` (~1s) both return `{answer, sources, cached}`; `format_for_prompt(r)` makes a prompt block; `RESEARCH_TOOL` is an OpenAI-format tool definition. Cached in `research/cache/` (committed, so reruns get identical answers). Errors come back as `{"error": ...}`, never raised. `YDC_DISABLED=1` turns it off (cache included) for the with/without-You.com comparison.
+3. ✅ Results page (`report/`): static HTML, no server. `.venv/bin/python -m report.build_page --name main --watch` rebuilds `runs/main/index.html` every 5s during a run (the page auto-reloads until the run finishes). Shows test before/after tiles, validation score per round (accepted vs rejected edits, hover for details), test budget share per line item vs optimal, and the change log with sources and playbook diffs. For the final eval, save to `runs/<name>/final_eval.json` (`final_eval(..., out_path=...)`) so it appears on the page.
 
 **B keeps:** model client, planner, channel agents, verifier, playbook v1, improver prompt and call, trace view, backup demo video.
 
-**Remaining for A after that:** check Version 1's agent score (if near 1.0, make traps harder), watch the run, final test eval, Q&A prep, README.
+**Blocked on B:** nothing can run end to end until `runner` and `propose_edit` exist (no agent code pushed as of 12:51). Version 1 score target: ~2:30.
+
+**Remaining for A:** check Version 1's agent score (if near 1.0, make traps harder), start the full run by 3:30 at the latest, watch it, final test eval, Q&A prep, README. Stretch: with/without-You.com comparison run (`YDC_DISABLED=1`).
 
 **Layout:** each improvement run lives in `runs/<name>/` (`playbooks/v1.md, v2.md, ...`, `candidates/`, `changelog.jsonl`), so a second run or the with/without-You.com comparison doesn't overwrite the first. The starting playbook is `playbooks/v1.md` (B).
 
@@ -154,9 +156,9 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 |---|---|
 | ~~Gate: paired comparison of N vs N+1 on validation, same seeds, accept margin~~ done | Improver agent: reads train failure traces, proposes one edit with a rationale |
 | ~~Final eval script (test split, run once)~~ done | |
-| You.com research tool for the improver, with disk cache (moved from B) | |
-| Change log (JSON lines: diff, sources, score change, accepted or rejected) (moved from B) | |
-| Loop: improve → gate → keep or revert → next round (moved from B) | |
+| ~~You.com research tool for the improver, with disk cache (moved from B)~~ done | |
+| ~~Change log (JSON lines: diff, sources, score change, accepted or rejected) (moved from B)~~ done | |
+| ~~Loop: improve → gate → keep or revert → next round (moved from B)~~ done | |
 
 ### 3:00: start the full improvement run (5-8 rounds). Do not slip this.
 
@@ -165,7 +167,7 @@ No rate limiting seen at 16 parallel calls. Reasoning models need a large `max_t
 | Person A | Person B |
 |---|---|
 | Watch the run; fix crashes; if time, a second run to show the result repeats. Stretch: run an improver without You.com side by side and compare accepted edits and final test score | |
-| Results page (FastAPI or plain HTML, **not Streamlit**): score per version, accepted and rejected edits as diffs, final test before/after (moved from B) | |
+| ~~Results page (FastAPI or plain HTML, **not Streamlit**): score per version, accepted and rejected edits as diffs, final test before/after (moved from B)~~ done (`report/`) | |
 | Final test-set evaluation: Version 1 vs final version | Trace view of one test campaign: Version 1 fooled by retargeting, final version not |
 
 ### 4:00-5:00: feature freeze
