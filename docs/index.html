@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AdCampaigner is an experimental AI agent team that tests and improves its ad campaign playbook in a simulator.">
+  <title>AdCampaigner — Better campaigns, proven by testing</title>
+  <style>
+    :root { color-scheme: light; --ink: #17251f; --muted: #52635b; --paper: #f5f7f2; --green: #176b4b; --line: #dce5dc; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    header, main, footer { width: min(1080px, calc(100% - 40px)); margin-inline: auto; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 26px 0; }
+    .brand { color: var(--ink); font-size: 19px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
+    nav a, footer a { color: var(--green); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    nav a { margin-left: 22px; font-size: 14px; }
+    main { padding: 72px 0 88px; }
+    .eyebrow { color: var(--green); font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { max-width: 760px; margin: 16px 0; font-size: clamp(42px, 7vw, 76px); line-height: 1.04; letter-spacing: -.065em; }
+    .intro { max-width: 670px; color: var(--muted); font-size: 19px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 30px 0 70px; }
+    .button { display: inline-block; border: 1px solid var(--green); border-radius: 7px; padding: 11px 17px; color: white; background: var(--green); font-weight: 650; text-decoration: none; }
+    .button.secondary { color: var(--green); background: transparent; }
+    .details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; border-top: 1px solid var(--line); padding-top: 28px; }
+    .details h2 { margin: 0 0 6px; font-size: 16px; }
+    .details p { margin: 0; color: var(--muted); font-size: 14px; }
+    footer { border-top: 1px solid var(--line); padding: 22px 0 34px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 650px) { main { padding-top: 48px; } .details { grid-template-columns: 1fr; gap: 20px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="./">AdCampaigner</a>
+    <nav aria-label="Main navigation"><a href="privacy.html">Privacy</a></nav>
+  </header>
+  <main>
+    <p class="eyebrow">An experimental campaign agent</p>
+    <h1>Better decisions, tested before they stick.</h1>
+    <p class="intro">AdCampaigner is an experimental AI agent team that plans and adjusts ad campaigns in a simulator. It learns from each run, then tests proposed playbook changes against measurable results before keeping them.</p>
+    <div class="actions">
+      <a class="button" href="https://github.com/owstron/hack-crusoe">Explore the project</a>
+      <a class="button secondary" href="privacy.html">Read our privacy policy</a>
+    </div>
+    <section class="details" aria-label="About AdCampaigner">
+      <div><h2>Built to experiment</h2><p>The project explores how an AI agent team can improve its approach over repeated runs.</p></div>
+      <div><h2>Tested in simulation</h2><p>Campaign decisions are evaluated in a simulator with hidden ground truth. Results are not a promise of real-world advertising performance.</p></div>
+      <div><h2>Open project</h2><p>AdCampaigner is a hackathon experiment. Visit the project repository to see how it works.</p></div>
+    </section>
+  </main>
+  <footer>AdCampaigner is an experimental project. <a href="privacy.html">Privacy policy</a></footer>
+</body>
+</html>
