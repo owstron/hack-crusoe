@@ -34,7 +34,7 @@ The simulator remains the source of truth for playbook acceptance. Live Meta res
 
 ### Model routing
 
-These choices supersede the earlier model names in `brainstorm.md`:
+These choices supersede the earlier model names in `planning/brainstorm.md`:
 
 | Role | Model | Temperature during evaluated simulation |
 |---|---|---|

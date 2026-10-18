@@ -13,8 +13,7 @@ Reply with ONE JSON object and nothing else:
 {"allocations": {"<line_item>": <share>, ...},        // non-negative shares, normalized to sum 1; omitted items get 0
  "holdouts": {"<line_item>": <share 0.05-0.5>},        // optional: withhold ads from that audience share to measure incrementality
  "hypotheses": {"<line_item>": "<one sentence>"}}      // optional: what you expect and why
-Use only the line items listed in campaign.capabilities.line_items. Only request holdouts if campaign.capabilities.holdouts is true.
-Platform-reported conversions are attributed by each platform and are not proof of incrementality."""
+Use only the line items listed in campaign.capabilities.line_items. Only request holdouts if campaign.capabilities.holdouts is true."""
 
 CREATIVES_HINT = """Also include "creatives": {"<line_item>": [{"id": "<unique id>", "headline": "...", "body": "...", "cta": "..."}]}
 with 2 distinct options per line item. They need human approval before any live use."""

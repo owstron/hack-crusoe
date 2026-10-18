@@ -4,10 +4,11 @@ A self-improving agent team, built on Crusoe Managed Inference. The team runs ad
 
 Hackathon theme: **Version N+1** (with **Done Means Done** as the verifier).
 
-- [brainstorm.md](brainstorm.md): project brief, architecture, and task split
+- [ARCHITECTURE.md](ARCHITECTURE.md): how the agents connect (diagrams of one campaign and of the improvement loop)
+- [planning/brainstorm.md](planning/brainstorm.md): project brief, architecture, and task split
 - [sim_calibration.md](sim_calibration.md): research behind every simulator setting and trap
 - [research/youdotcom/](research/youdotcom/): raw You.com research responses with sources
-- [HACKATHON.md](HACKATHON.md): event rules and judging criteria
+- [planning/HACKATHON.md](planning/HACKATHON.md): event rules and judging criteria
 
 ## Setup
 
@@ -23,7 +24,7 @@ cp .env.example .env   # then add your keys
 ```bash
 # loop smoke test with model-free stubs
 .venv/bin/python run_improvement.py --name smoke --rounds 2
-# agent swarm (once agents.runner / agents.improver exist; see action_plan.md)
+# agent swarm (once agents.runner / agents.improver exist; see planning/action_plan.md)
 .venv/bin/python run_improvement.py --name main --rounds 6 \
     --runner agents.runner:run --improver agents.improver:propose_edit
 ```

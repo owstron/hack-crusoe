@@ -1,0 +1,24 @@
+{
+  "question": "What is the minimum detectable effect (MDE) and required sample size for a holdout test to reliably estimate true incremental CPA with 90% confidence and \u00b110% precision, given typical conversion rates and budget sizes in prospecting and retargeting campaigns on Meta and Google?",
+  "effort": "lite",
+  "answer": "To estimate true incremental CPA with 90% confidence and \u00b110% precision, the required sample size depends on the baseline conversion rate (CR) and expected lift.\n\n*   **Sample Size:** For a 2% baseline CR, detecting a 2-point absolute lift (~100% relative lift) typically requires ~38,000 users per cell [[1]]. Higher precision (\u00b110% of mean) in low-CR prospecting (0.5\u20131.5%) often requires >100,000 users per cell to overcome variance [[2]].\n*   **MDE:** Small effects (e.g., <5% relative lift) are often undetectable with standard budgets [[3]]. \n*   **Benchmarks:** Target 200+ incremental conversions in the control group for validity [[4]]. Retargeting tests (5\u201312% CR) require smaller samples than prospecting (0.5\u20131.5% CR) to reach significance [[2]].",
+  "sources": [
+    {
+      "url": "https://www.adstellar.ai/blog/incrementality-testing",
+      "title": "Incrementality Testing in 2026: A Practical\u2026 | AdStellar"
+    },
+    {
+      "url": "https://www.adamigo.ai/blog/meta-ads-benchmarks-2026-funnel-prospecting-retargeting-retention",
+      "title": "Meta Ads Benchmarks by Funnel Stage (2026): Prospecting vs ..."
+    },
+    {
+      "url": "https://www.growth-rocket.com/blog/incrementality-testing-in-paid-media-without-wasting-ad-spend/",
+      "title": "Incrementality Testing in Paid Media Without Wasting Ad Spend - ..."
+    },
+    {
+      "url": "https://adlibrary.com/posts/holdout-test",
+      "title": "Holdout Test in 2026: Incrementality Measurement That Actually Works"
+    }
+  ],
+  "seconds": 5.5
+}

@@ -1,6 +1,6 @@
 """Crusoe model routing + a recorded, retrying call helper.
 
-Role -> model mapping follows action_plan.md "Model routing" (IDs verified
+Role -> model mapping follows planning/action_plan.md "Model routing" (IDs verified
 against Crusoe /v1/models). Models are never switched silently: on failure the
 caller's explicit `fallback` value is returned with fallback_used=True.
 """
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import random
+import sys
 import threading
 import time
 from dataclasses import dataclass
@@ -44,6 +45,8 @@ ROLE_MAX_TOKENS: dict[str, int] = {
     "summarizer": 2048, "improver": 4096, "visual": 2048,
 }
 DEFAULT_TIMEOUT_S = 120.0
+# Longest single wait between retries (waits go 2, 4, 8 s, then stay at the cap).
+BACKOFF_CAP_S = float(os.environ.get("MODEL_BACKOFF_CAP_S", "10"))
 # Process-wide cap on in-flight requests: parallel gate campaigns would otherwise trip Crusoe's 429 limits, and a
 # fallback silently degrades a gate comparison.
 MAX_IN_FLIGHT = int(os.environ.get("MODEL_CONCURRENCY", "6"))
@@ -105,11 +108,12 @@ def call_model(role: str, messages: list[dict], *, client=None,
                ctx: dict | None = None, expect: str = "object",
                max_tokens: int | None = None,
                sleep: Callable[[float], None] | None = None,
-               backoff_base: float = 2.0) -> CallResult:
-    """Call the model for `role`; retries transient errors, bad JSON and schema failures."""
+               backoff_base: float = 2.0, temperature: float | None = None) -> CallResult:
+    """Call the model for `role`; retries transient errors, bad JSON and schema failures.
+    `temperature` overrides the role's setting for this call (the improver's explore mode uses it); it is recorded."""
     if role not in ROLE_MODELS:
         raise KeyError(f"unknown role {role!r}; known: {sorted(ROLE_MODELS)}")
-    model, temp = ROLE_MODELS[role], ROLE_TEMPERATURE[role]
+    model, temp = ROLE_MODELS[role], ROLE_TEMPERATURE[role] if temperature is None else temperature
     res = CallResult(ok=False, model=model, temperature=temp, prompt=messages)
     t0 = time.monotonic()
     try:
@@ -151,7 +155,9 @@ def call_model(role: str, messages: list[dict], *, client=None,
             if not _is_transient(e):
                 break
         if attempt <= max_retries:
-            (sleep or time.sleep)(min(30.0, backoff_base * 2 ** (attempt - 1)) + random.uniform(0, 0.25 * backoff_base))
+            print(f"  [{time.strftime('%H:%M:%S')}] {role} attempt {attempt}/{max_retries + 1} failed: "
+                  f"{(res.error or '')[:100]}; retrying", file=sys.stderr, flush=True)
+            (sleep or time.sleep)(min(BACKOFF_CAP_S, backoff_base * 2 ** (attempt - 1)) + random.uniform(0, 0.25 * backoff_base))
     if not res.ok:
         res.parsed, res.fallback_used = fallback, True
     res.latency_s = time.monotonic() - t0

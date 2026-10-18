@@ -27,12 +27,12 @@ Real ad data records who clicked and converted, not what those people would have
 
 ### Simulator (plain Python + numpy, ~150 lines, deterministic given a seed)
 
-Settings are sampled from real-world ranges in [sim_calibration.md](sim_calibration.md) (researched with You.com, with sources). Line items: Meta prospecting, Meta retargeting, Google non-brand search, Google brand search.
+Settings are sampled from real-world ranges in [sim_calibration.md](../sim_calibration.md) (researched with You.com, with sources). Line items: Meta prospecting, Meta retargeting, Google non-brand search, Google brand search.
 
 - Each campaign has a product, a budget, 2 channels (Meta, Google), and 2-3 audiences per channel (e.g. prospecting, retargeting).
 - Each line item has hidden settings: true incremental conversion rate, baseline conversion rate (people who would convert anyway), how fast returns drop off as spend grows, and how fast creative wears out.
 - The simulator runs in **4 checkpoints**, not daily pacing. At each checkpoint the agents see observed metrics (spend, last-click conversions, CPA). They see holdout results only for line items where they chose to run a holdout test.
-- **Traps (6, each based on research; full sources in [sim_calibration.md](sim_calibration.md) section 7):**
+- **Traps (6, each based on research; full sources in [sim_calibration.md](../sim_calibration.md) section 7):**
   1. Retargeting over-credit: great last-click CPA, near-zero true lift. *(Google ghost-ad study, 432 experiments)*
   2. Brand search over-credit: the same trap on Google. **Held back for test campaigns only.** *(eBay experiment, Econometrica 2015)*
   3. Prospecting under-credit: the line item that looks worst on last-click is actually the best. *(Haus, 640 Meta experiments; Gordon et al., 663 Facebook RCTs)*

@@ -1,0 +1,354 @@
+{
+  "split": "test",
+  "v1": "runs/main2/playbooks/v1.md",
+  "final": "runs/main2/playbooks/v1.md",
+  "v1_mean": 0.5947,
+  "final_mean": 0.5924,
+  "mean_diff": -0.0023,
+  "ci95": [
+    -0.0213,
+    0.0167
+  ],
+  "wins": 4,
+  "losses": 8,
+  "n_pairs": 18,
+  "v1_detail": {
+    "mean_score": 0.5947,
+    "errors": 0,
+    "spend_share_vs_optimal": {
+      "meta_prospecting": {
+        "actual": 0.293,
+        "optimal": 0.753
+      },
+      "meta_retargeting": {
+        "actual": 0.207,
+        "optimal": 0.057
+      },
+      "google_nonbrand": {
+        "actual": 0.207,
+        "optimal": 0.135
+      },
+      "google_brand": {
+        "actual": 0.293,
+        "optimal": 0.055
+      }
+    },
+    "creative_rotations_per_campaign": 0.0,
+    "runs": {
+      "test-0-0/s0": {
+        "campaign": "test-0-0",
+        "seed": 0,
+        "score": 0.5673559959328636,
+        "error": null,
+        "seconds": 47.6,
+        "run_id": "sim-8c84624c4dd8"
+      },
+      "test-0-0/s1": {
+        "campaign": "test-0-0",
+        "seed": 1,
+        "score": 0.5794589567855319,
+        "error": null,
+        "seconds": 28.4,
+        "run_id": "sim-a55acaf62eee"
+      },
+      "test-0-0/s2": {
+        "campaign": "test-0-0",
+        "seed": 2,
+        "score": 0.5794589567855319,
+        "error": null,
+        "seconds": 33.2,
+        "run_id": "sim-6e6ba33bb880"
+      },
+      "test-0-1/s0": {
+        "campaign": "test-0-1",
+        "seed": 0,
+        "score": 0.6170305306789509,
+        "error": null,
+        "seconds": 34.0,
+        "run_id": "sim-ce13aef634cf"
+      },
+      "test-0-1/s1": {
+        "campaign": "test-0-1",
+        "seed": 1,
+        "score": 0.6170305306789509,
+        "error": null,
+        "seconds": 49.2,
+        "run_id": "sim-5c6e76223269"
+      },
+      "test-0-1/s2": {
+        "campaign": "test-0-1",
+        "seed": 2,
+        "score": 0.5911553368866639,
+        "error": null,
+        "seconds": 44.2,
+        "run_id": "sim-02b0cbc0dbd5"
+      },
+      "test-0-2/s0": {
+        "campaign": "test-0-2",
+        "seed": 0,
+        "score": 0.6375919749169897,
+        "error": null,
+        "seconds": 46.4,
+        "run_id": "sim-9777492e5785"
+      },
+      "test-0-2/s1": {
+        "campaign": "test-0-2",
+        "seed": 1,
+        "score": 0.5756369152701123,
+        "error": null,
+        "seconds": 32.6,
+        "run_id": "sim-f4dee7124526"
+      },
+      "test-0-2/s2": {
+        "campaign": "test-0-2",
+        "seed": 2,
+        "score": 0.614296570775871,
+        "error": null,
+        "seconds": 61.3,
+        "run_id": "sim-0e3992c99413"
+      },
+      "test-0-3/s0": {
+        "campaign": "test-0-3",
+        "seed": 0,
+        "score": 0.5119866685352991,
+        "error": null,
+        "seconds": 61.7,
+        "run_id": "sim-71c29b1e4e80"
+      },
+      "test-0-3/s1": {
+        "campaign": "test-0-3",
+        "seed": 1,
+        "score": 0.5569118307204599,
+        "error": null,
+        "seconds": 47.0,
+        "run_id": "sim-ebc59040b1db"
+      },
+      "test-0-3/s2": {
+        "campaign": "test-0-3",
+        "seed": 2,
+        "score": 0.49523943623875205,
+        "error": null,
+        "seconds": 57.2,
+        "run_id": "sim-41853863df8c"
+      },
+      "test-0-4/s0": {
+        "campaign": "test-0-4",
+        "seed": 0,
+        "score": 0.6215763582173455,
+        "error": null,
+        "seconds": 31.5,
+        "run_id": "sim-d96a97653987"
+      },
+      "test-0-4/s1": {
+        "campaign": "test-0-4",
+        "seed": 1,
+        "score": 0.6208722783933697,
+        "error": null,
+        "seconds": 27.1,
+        "run_id": "sim-2f47355b6bea"
+      },
+      "test-0-4/s2": {
+        "campaign": "test-0-4",
+        "seed": 2,
+        "score": 0.6208722783933697,
+        "error": null,
+        "seconds": 57.0,
+        "run_id": "sim-d9886ff3f5ca"
+      },
+      "test-0-5/s0": {
+        "campaign": "test-0-5",
+        "seed": 0,
+        "score": 0.6706767939794458,
+        "error": null,
+        "seconds": 58.0,
+        "run_id": "sim-9d9db98851d7"
+      },
+      "test-0-5/s1": {
+        "campaign": "test-0-5",
+        "seed": 1,
+        "score": 0.5572251148448142,
+        "error": null,
+        "seconds": 32.2,
+        "run_id": "sim-c6e2530bfac7"
+      },
+      "test-0-5/s2": {
+        "campaign": "test-0-5",
+        "seed": 2,
+        "score": 0.6706767939794458,
+        "error": null,
+        "seconds": 52.6,
+        "run_id": "sim-ea66caf50110"
+      }
+    }
+  },
+  "final_detail": {
+    "mean_score": 0.5924,
+    "errors": 0,
+    "spend_share_vs_optimal": {
+      "meta_prospecting": {
+        "actual": 0.295,
+        "optimal": 0.753
+      },
+      "meta_retargeting": {
+        "actual": 0.205,
+        "optimal": 0.057
+      },
+      "google_nonbrand": {
+        "actual": 0.209,
+        "optimal": 0.135
+      },
+      "google_brand": {
+        "actual": 0.291,
+        "optimal": 0.055
+      }
+    },
+    "creative_rotations_per_campaign": 0.0,
+    "runs": {
+      "test-0-0/s0": {
+        "campaign": "test-0-0",
+        "seed": 0,
+        "score": 0.6137270418525469,
+        "error": null,
+        "seconds": 21.0,
+        "run_id": "sim-8f3d19f44ff9"
+      },
+      "test-0-0/s1": {
+        "campaign": "test-0-0",
+        "seed": 1,
+        "score": 0.5845006413748841,
+        "error": null,
+        "seconds": 40.8,
+        "run_id": "sim-26c7361bbc2f"
+      },
+      "test-0-0/s2": {
+        "campaign": "test-0-0",
+        "seed": 2,
+        "score": 0.5673559959328636,
+        "error": null,
+        "seconds": 42.9,
+        "run_id": "sim-0557734a6a24"
+      },
+      "test-0-1/s0": {
+        "campaign": "test-0-1",
+        "seed": 0,
+        "score": 0.5687488934094667,
+        "error": null,
+        "seconds": 34.7,
+        "run_id": "sim-a067dfad5333"
+      },
+      "test-0-1/s1": {
+        "campaign": "test-0-1",
+        "seed": 1,
+        "score": 0.6005856499879552,
+        "error": null,
+        "seconds": 41.3,
+        "run_id": "sim-146cd43a3c80"
+      },
+      "test-0-1/s2": {
+        "campaign": "test-0-1",
+        "seed": 2,
+        "score": 0.5911553368866639,
+        "error": null,
+        "seconds": 24.6,
+        "run_id": "sim-616e8db382da"
+      },
+      "test-0-2/s0": {
+        "campaign": "test-0-2",
+        "seed": 0,
+        "score": 0.6047572876411181,
+        "error": null,
+        "seconds": 26.7,
+        "run_id": "sim-f14cc9490b07"
+      },
+      "test-0-2/s1": {
+        "campaign": "test-0-2",
+        "seed": 1,
+        "score": 0.6037047773747646,
+        "error": null,
+        "seconds": 49.9,
+        "run_id": "sim-b82af84be1a5"
+      },
+      "test-0-2/s2": {
+        "campaign": "test-0-2",
+        "seed": 2,
+        "score": 0.575241981856102,
+        "error": null,
+        "seconds": 41.3,
+        "run_id": "sim-6d5bc68adb98"
+      },
+      "test-0-3/s0": {
+        "campaign": "test-0-3",
+        "seed": 0,
+        "score": 0.5119865159880909,
+        "error": null,
+        "seconds": 50.7,
+        "run_id": "sim-3258e36e199e"
+      },
+      "test-0-3/s1": {
+        "campaign": "test-0-3",
+        "seed": 1,
+        "score": 0.5569118307204599,
+        "error": null,
+        "seconds": 54.6,
+        "run_id": "sim-08aed6aebe25"
+      },
+      "test-0-3/s2": {
+        "campaign": "test-0-3",
+        "seed": 2,
+        "score": 0.49523943623875205,
+        "error": null,
+        "seconds": 30.6,
+        "run_id": "sim-456f0517f995"
+      },
+      "test-0-4/s0": {
+        "campaign": "test-0-4",
+        "seed": 0,
+        "score": 0.6215763582173455,
+        "error": null,
+        "seconds": 89.7,
+        "run_id": "sim-563a14c2bbeb"
+      },
+      "test-0-4/s1": {
+        "campaign": "test-0-4",
+        "seed": 1,
+        "score": 0.6208722783933697,
+        "error": null,
+        "seconds": 36.1,
+        "run_id": "sim-887cacb54f29"
+      },
+      "test-0-4/s2": {
+        "campaign": "test-0-4",
+        "seed": 2,
+        "score": 0.5761906505593728,
+        "error": null,
+        "seconds": 56.1,
+        "run_id": "sim-604e7d897fb7"
+      },
+      "test-0-5/s0": {
+        "campaign": "test-0-5",
+        "seed": 0,
+        "score": 0.6298082346487401,
+        "error": null,
+        "seconds": 110.2,
+        "run_id": "sim-b14a6044dfae"
+      },
+      "test-0-5/s1": {
+        "campaign": "test-0-5",
+        "seed": 1,
+        "score": 0.6706767939794458,
+        "error": null,
+        "seconds": 36.4,
+        "run_id": "sim-eb7d1e41966a"
+      },
+      "test-0-5/s2": {
+        "campaign": "test-0-5",
+        "seed": 2,
+        "score": 0.6706767939794458,
+        "error": null,
+        "seconds": 29.5,
+        "run_id": "sim-2bc15f89caeb"
+      }
+    }
+  },
+  "seconds": 194.5
+}

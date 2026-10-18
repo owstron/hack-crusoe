@@ -1,0 +1,32 @@
+{
+  "question": "How can we accurately measure and compare the true incrementality of different marketing channels (especially brand vs. non-brand and prospecting vs. retargeting) using holdout experiments or causal inference methods, to avoid optimizing for attributed CPA that does not reflect causal impact?",
+  "effort": "lite",
+  "answer": "To measure marketing incrementality and avoid misleading attributed CPA, shift from correlation-based attribution to **causal experimentation** [[1, 2, 3]]:\n\n*   **Geo-Holdout Tests:** Randomly assign geographic regions to treatment (active ads) and control (ad suppression) groups to isolate lift [[4, 5]]. This is the gold standard for channels like branded search and offline media where individual-level randomization is impossible [[6, 7]].\n*   **User-Level RCTs:** Use platform-native tools (e.g., Meta/Google conversion lift) to randomly split audiences into exposed and holdout groups, often using **PSA/ghost ads** to maintain a neutral baseline [[8, 9]].\n*   **MMM Calibration:** Use experimental results as **Bayesian priors** to anchor Marketing Mix Models, correcting systematic biases in attribution where channels like retargeting often claim credit for organic conversions [[1, 2, 10]]. \n\nFocus on identifying the \"counterfactual\"\u2014what would have occurred without spend\u2014to prove true incremental value [[11, 12]].",
+  "sources": [
+    {
+      "url": "https://www.measured.com/faq/incrementality-attribution-mmm-decision-tree/",
+      "title": "Incrementality vs. Attribution vs. MMM: A Decision Tree for What ..."
+    },
+    {
+      "url": "https://mma.com/resources/analytic-fundamentals-what-is-marketing-incrementality/",
+      "title": "What Is Marketing Incrementality? | Ipsos MMA"
+    },
+    {
+      "url": "https://improvado.io/blog/incrementality-guide",
+      "title": "Marketing Incrementality: The Ultimate Guide to Measurement & Testing"
+    },
+    {
+      "url": "https://mass-analytics.com/mmm-solutions/incrementality-measurement-mass-analytics/",
+      "title": "Incrementality Measurement | MASS Analytics"
+    },
+    {
+      "url": "https://mass-analytics.com/marketing-mix-modeling-blogs/incrementality-testing-in-marketing-closing-the-causal-gap/",
+      "title": "Incrementality Testing in Marketing: Closing the Causal Gap"
+    },
+    {
+      "url": "https://www.brandedagency.com/blog/incrementality-testing-practical-guide",
+      "title": "Incrementality Testing: A Practical Guide for Marketers"
+    }
+  ],
+  "seconds": 5.7
+}
